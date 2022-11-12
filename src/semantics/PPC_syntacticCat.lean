@@ -58,19 +58,6 @@ end
 -- Preorder on equivalence classes
 def PPC_eq_order   : PPC_eq → PPC_eq → Prop 
   := quot.lift₂ PPC_preorder.le PPC_preorder_liftable1 PPC_preorder_liftable2
--- := begin
---       assume a b,
---       induction a with φ ψ₀ ψ₁ ψ₂,
---       induction b with ψ φ₀ φ₁ φ₂,
---       exact φ ⊢ ψ,
---       -- proof that this respects ⊣⊢ in φ
---       -- simp[eq.rec],
---       apply propext,
---       dsimp[setoid.r] at φ₂, cases φ₂ with forw rev,
---       constructor, assume φφ₀, exact φφ₀, 
---       --rewrite at φφ₀,
---       apply derive_trans, exact φφ₀,  
---    end
 
 /- 
   Helpful lemma to allow us to use the natural deduction calculus
@@ -169,7 +156,7 @@ instance : FP_cat PPC_eq :=
       assume X Y,
       induction X with φ, induction Y with ψ,
       exact ℂ_PPC_obj (φ & ψ),
-      sorry,sorry, --TODO Prove that this respects ⊣⊢
+      sorry,sorry, --TODO: Prove that lifting `&` onto equiv classes is well-defined
     end 
   ,
   pr1 :=
