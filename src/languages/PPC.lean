@@ -9,5 +9,7 @@ inductive PPC_form : Type
 
 notation (name:=PPC.top) `⊤`:80   := PPC_form.top
 prefix `p`:80     := PPC_form.var
-infix `&`:79      := PPC_form.and
-notation (name:=PPC_form.impl) φ ⊃ ψ := PPC_form.impl φ ψ 
+infix `&`:79      := PPC_form.and    
+notation (name:=PPC_form.impl) φ `⊃`:80 ψ := PPC_form.impl φ ψ 
+
+-- ⇨

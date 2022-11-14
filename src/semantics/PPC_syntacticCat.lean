@@ -49,37 +49,44 @@ instance : FP_cat PPC_eq :=
   unit := ℂ_PPC_obj PPC_form.top,
   term := 
     begin
+      -- Actual construction
       assume X,
       induction X with φ,
       change (quot.mk setoid.r φ) with (ℂ_PPC_obj φ),
       apply ℂ_PPC_hom,
       exact derives.truth,
+      -- Proving this respects ⊣⊢
       apply ℂ_PPC_thin,
     end,
   unit_η := λ X f, ℂ_PPC_thin,
   prod := (&⁼),
   pr1 :=
     begin
+      -- Actual construction
       assume X Y,
       induction X with φ, induction Y with ψ,
       apply ℂ_PPC_hom,
       apply derives.and_eliml,
       apply derive_refl,
+      -- Proving this respects ⊣⊢
       apply ℂ_PPC_thin,
       apply ℂ_PPC_thin,
     end,
   pr2 :=
     begin
+      -- Actual construction
       assume X Y,
       induction X with φ, induction Y with ψ,
       apply ℂ_PPC_hom,
       apply derives.and_elimr,
       apply derive_refl,
+      -- Proving this respects ⊣⊢
       apply ℂ_PPC_thin,
       apply ℂ_PPC_thin,
     end,
   pair :=
     begin
+      -- Actual construction
       assume X Y Z f g,
       induction X with φ, induction Y with ψ, induction Z with χ,
       let h : χ ⊢ φ := le_of_hom f,
@@ -87,11 +94,47 @@ instance : FP_cat PPC_eq :=
       apply ℂ_PPC_hom,
       apply derives.and_intro,
       exact h, exact h',
-      apply funext, assume x, apply funext, assume x', dsimp, apply ℂ_PPC_thin,
-      apply funext, assume x, apply ℂ_PPC_thin,
-      apply funext, assume x, apply ℂ_PPC_thin,
+      -- Proving this respects ⊣⊢
+      apply funext, assume _, apply funext, assume _, apply ℂ_PPC_thin,
+      apply funext, assume _, apply ℂ_PPC_thin,
+      apply funext, assume _, apply ℂ_PPC_thin,
     end,
   prod_β1 := λ X Y Z f g, ℂ_PPC_thin,
   prod_β2 := λ X Y Z f g, ℂ_PPC_thin,
   prod_η :=  λ X Y, ℂ_PPC_thin,
+}
+
+instance : CCC PPC_eq := 
+{
+  exp := (⊃⁼),
+  eval := 
+    begin 
+      -- Actual construction
+      assume Y Z,
+      induction Y with ψ, induction Z with θ,
+      apply ℂ_PPC_hom,
+      apply union_Hyp_and,
+      apply modus_ponens,
+      -- Proving this respects ⊣⊢
+      apply ℂ_PPC_thin,
+      apply ℂ_PPC_thin,
+    end,
+  curry := 
+    begin 
+      -- Actual construction
+      assume X Y Z u,
+      induction X with φ, induction Y with ψ, induction Z with θ,
+      apply ℂ_PPC_hom,
+      have h : (φ&ψ) ⊢ θ,
+      exact (Exists.fst (ℂ_PPC_full u)),
+      apply derives.impl_intro,
+      apply and_Hyp_union,
+      exact h,
+      -- Proving this respects ⊣⊢
+      apply funext, assume _, apply ℂ_PPC_thin,
+      apply funext, assume _, apply ℂ_PPC_thin,
+      apply funext, assume _, apply ℂ_PPC_thin,
+    end,
+  curry_β := λ {X Y Z} u, ℂ_PPC_thin,
+  curry_η := λ {X Y Z} v, ℂ_PPC_thin,
 }

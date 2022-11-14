@@ -110,21 +110,21 @@ begin
     -- Proof that φ&ψ ⊢ φ&ψ'
       apply derives.and_intro,
       -- φ&ψ ⊢ φ
-      apply @derives.and_eliml (just (φ&ψ)) φ ψ,
+      apply @derives.and_eliml {φ&ψ} φ ψ,
       apply derive_refl, -- φ&ψ ⊢ φ&ψ
       -- φ&ψ ⊢ ψ'
       apply derive_trans,
-      apply @derives.and_elimr (just (φ&ψ)) φ ψ,
+      apply @derives.and_elimr {φ&ψ} φ ψ,
       apply derive_refl, -- φ&ψ ⊢ φ&ψ
       exact ψψ',
     -- Proof that φ&ψ' ⊢ φ&ψ
       apply derives.and_intro,
       -- φ&ψ ⊢ φ
-      apply @derives.and_eliml (just (φ&ψ')) φ ψ',
+      apply @derives.and_eliml {φ&ψ'} φ ψ',
       apply derive_refl, -- φ&ψ' ⊢ φ&ψ'
       -- φ&ψ' ⊢ ψ
       apply derive_trans,
-      apply @derives.and_elimr (just (φ&ψ')) φ ψ',
+      apply @derives.and_elimr {φ&ψ'} φ ψ',
       apply derive_refl, -- φ&ψ' ⊢ φ&ψ'
       exact ψ'ψ,
 end
@@ -139,18 +139,18 @@ begin
     -- Proof that φ&ψ ⊢ φ'&ψ
       apply derives.and_intro,
       apply derive_trans,
-      apply @derives.and_eliml (just (φ&ψ)) φ ψ,
+      apply @derives.and_eliml {φ&ψ} φ ψ,
       apply derive_refl, -- φ&ψ ⊢ φ&ψ
       exact φφ',
-      apply @derives.and_elimr (just (φ&ψ)) φ ψ,
+      apply @derives.and_elimr {φ&ψ} φ ψ,
       apply derive_refl, -- φ&ψ ⊢ φ&ψ
     -- Proof that φ'&ψ ⊢ φ&ψ
       apply derives.and_intro,
       apply derive_trans,
-      apply @derives.and_eliml (just (φ'&ψ)) φ' ψ,
+      apply @derives.and_eliml {φ'&ψ} φ' ψ,
       apply derive_refl, -- φ'&ψ ⊢ φ'&ψ
       exact φ'φ,
-      apply @derives.and_elimr (just (φ'&ψ)) φ' ψ,
+      apply @derives.and_elimr {φ'&ψ} φ' ψ,
       apply derive_refl, -- φ'&ψ ⊢ φ'&ψ
 end
 

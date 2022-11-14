@@ -157,7 +157,7 @@ begin
     apply derive_refl,
 end 
 
-lemma hypo_syll : ∀ φ ψ θ, (φ ⊃ ψ) ⊢ ((ψ ⊃ θ) ⊃ (φ ⊃ θ)) := sorry
+-- lemma hypo_syll : ∀ φ ψ θ, (φ ⊃ ψ) ⊢ ((ψ ⊃ θ) ⊃ (φ ⊃ θ)) := sorry
 
 lemma hypo_syll' : ∀ φ ψ θ, (ψ ⊃ θ) ⊢ ((φ ⊃ ψ) ⊃ (φ ⊃ θ)) :=
 begin 
@@ -173,4 +173,39 @@ begin
     apply in_U_φ,
     apply @derives.hyp ({ψ⊃θ} U φ⊃ψ U φ) (φ) (φ),
     apply in_U_φ,
+end 
+
+lemma union_Hyp_and : ∀ φ ψ θ : PPC_form, derives ({φ}∪{ψ}) θ → ((φ&ψ) ⊢ θ) :=
+begin 
+    assume φ ψ θ h,
+    apply derives.impl_elim,
+    apply derives.impl_elim,
+    rewrite← singleton_insert,
+    apply derives.weak,
+    apply derives.impl_intro,
+    rewrite singleton_insert,
+    apply derives.impl_intro,
+    exact h,
+    apply derives.and_eliml,
+    apply derive_refl,
+    apply derives.and_elimr,
+    apply derive_refl,
+end 
+
+lemma and_Hyp_union : ∀ φ ψ θ : PPC_form, ((φ&ψ) ⊢ θ) → derives ({φ}∪{ψ}) θ :=
+begin 
+    assume φ ψ θ h,
+    apply derives.impl_elim,
+    apply derives.weak,
+    rewrite← singleton_insert,
+    apply derives.weak,
+    apply derives.impl_intro,
+    rewrite singleton_insert,
+    exact h,
+    apply derives.and_intro,
+    apply derives.weak,
+    apply derive_refl,
+    rewrite union_comm,
+    apply derives.weak,
+    apply derive_refl,
 end 
