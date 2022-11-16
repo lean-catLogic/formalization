@@ -30,9 +30,11 @@ inductive derives : Hyp → PPC_form → Prop
       : derives Φ φ → derives (Φ ∪ Ψ) φ
 
 infix `⊢`:80 := λ φ ψ, derives {φ} ψ
+--
 
 
 --- LEMMAS ---
+namespace Hyp_x
 lemma union_comm : ∀ Φ Ψ : Hyp, Φ ∪ Ψ = Ψ ∪ Φ :=
 begin 
     assume Φ Ψ,
@@ -51,12 +53,6 @@ begin
     left,
     exact h,
 end
-lemma weak1 : ∀ (Φ : Hyp) (φ ψ : PPC_form), derives Φ φ → derives (Φ U ψ) φ :=
-begin 
-    assume Φ φ ψ h,
-    apply derives.weak,
-    exact h,
-end 
 
 lemma singleton_insert : ∀ φ : PPC_form, (∅ U φ) = {φ} :=
 begin
@@ -74,7 +70,12 @@ begin
     right,
     exact h,
 end
-
+ -- φ ∈ {φ}
+lemma in_single : ∀ φ : PPC_form , φ ∈ Hyp.has_singleton.singleton φ :=
+begin 
+    assume φ,
+    dsimp[Hyp.has_singleton,set.has_singleton], refl,
+end 
 lemma in_U_φ : ∀ (Φ : Hyp) (φ : PPC_form), φ ∈ (Φ U φ) := 
 begin 
     assume Φ φ,
@@ -110,38 +111,62 @@ begin
     exact isψ,
 end 
 
-lemma derive_refl : ∀ φ : PPC_form, φ ⊢ φ :=
-begin
-    assume φ,
-    apply derives.hyp,
-    exact φ,
-    dsimp[Hyp.has_singleton,set.has_singleton],
-    refl,
+end Hyp_x
+
+namespace derives_x
+
+    open derives
+
+lemma weaksucc : ∀ (Φ : Hyp) (φ ψ : PPC_form), derives Φ ψ → derives (Φ U φ) ψ :=
+begin 
+    assume Φ φ ψ h,
+    apply weak,
+    exact h,
 end
-lemma derive_trans : ∀ φ ψ θ : PPC_form, φ ⊢ ψ → ψ ⊢ θ → φ ⊢ θ :=
+lemma weak1 : ∀ (φ ψ : PPC_form), derives ∅ ψ → φ ⊢ ψ :=
+begin 
+    assume φ ψ h,
+    rewrite← Hyp_x.singleton_insert,
+    apply weak,
+    exact h,
+end
+lemma internal1_impl : ∀ {φ ψ : PPC_form}, ψ ⊢ φ → derives ∅ (ψ ⊃ φ) :=
+begin 
+    assume φ ψ h,
+    apply impl_intro,
+    rewrite Hyp_x.singleton_insert,
+    exact h,
+end
+lemma refl : ∀ φ : PPC_form, φ ⊢ φ :=
+begin
+    intro φ,
+    apply @hyp {φ} φ,
+    apply Hyp_x.in_single, -- φ ∈ {φ}
+end
+lemma trans : ∀ φ ψ θ : PPC_form, φ ⊢ ψ → ψ ⊢ θ → φ ⊢ θ :=
 begin 
     assume φ ψ θ hφψ hψθ,
     have helper : derives {φ} (ψ ⊃ θ), 
-    rewrite← singleton_insert,
-    apply derives.weak,
-    apply derives.impl_intro,
-    rewrite singleton_insert,
+    apply weak1,
+    apply internal1_impl,
     exact hψθ,
-    apply derives.impl_elim,
+    apply impl_elim,
     exact helper,
     exact hφψ,
 end 
-lemma derive_trans_hyp : ∀ (Φ : Hyp) (φ ψ: PPC_form), derives Φ φ → φ ⊢ ψ → derives Φ ψ :=
+
+
+lemma trans_hyp : ∀ (Φ : Hyp) (φ ψ: PPC_form), derives Φ φ → φ ⊢ ψ → derives Φ ψ :=
 begin 
     -- sorry
     assume Φ φ ψ hΦφ hφψ,
     have helper : derives Φ (φ ⊃ ψ),
-    apply derives.impl_intro,
+    apply impl_intro,
     dsimp[(U)],
-    rewrite union_comm,
-    apply derives.weak,
+    rewrite Hyp_x.union_comm,
+    apply weak,
     exact hφψ,
-    apply derives.impl_elim,
+    apply impl_elim,
     exact helper,
     exact hΦφ,
 end 
@@ -149,12 +174,12 @@ end
 lemma modus_ponens : ∀ φ ψ : PPC_form, derives ({φ⊃ψ}∪{φ}) ψ :=
 begin 
     assume φ ψ,
-    apply derives.impl_elim,
-    apply derives.weak,
-    apply derive_refl,
-    rewrite union_comm,
-    apply derives.weak,
-    apply derive_refl,
+    apply impl_elim,
+    apply weak,
+    apply derives_x.refl,
+    rewrite Hyp_x.union_comm,
+    apply weak,
+    apply derives_x.refl,
 end 
 
 -- lemma hypo_syll : ∀ φ ψ θ, (φ ⊃ ψ) ⊢ ((ψ ⊃ θ) ⊃ (φ ⊃ θ)) := sorry
@@ -162,50 +187,50 @@ end
 lemma hypo_syll' : ∀ φ ψ θ, (ψ ⊃ θ) ⊢ ((φ ⊃ ψ) ⊃ (φ ⊃ θ)) :=
 begin 
     assume φ ψ θ,
-    apply derives.impl_intro,
-    apply derives.impl_intro,
-    apply derives.impl_elim,
-    apply @derives.hyp ({ψ⊃θ} U φ⊃ψ U φ) (ψ ⊃ θ) (ψ ⊃ θ),
-    apply in_U_Φ, apply in_U_Φ, rewrite← singleton_insert, apply in_U_φ,
-    apply derives.impl_elim,
-    apply derives.weak,
-    apply @derives.hyp ({ψ⊃θ} U φ⊃ψ) (φ⊃ψ) (φ⊃ψ),
-    apply in_U_φ,
-    apply @derives.hyp ({ψ⊃θ} U φ⊃ψ U φ) (φ) (φ),
-    apply in_U_φ,
+    apply impl_intro,
+    apply impl_intro,
+    apply impl_elim,
+    apply @hyp ({ψ⊃θ} U φ⊃ψ U φ) (ψ ⊃ θ) (ψ ⊃ θ),
+    -- ψ⊃θ ∈ {ψ⊃θ , φ⊃ψ , φ}
+    apply Hyp_x.in_U_Φ, apply Hyp_x.in_U_Φ, rewrite← Hyp_x.singleton_insert, apply Hyp_x.in_U_φ,
+    apply impl_elim,
+    apply weak,
+    apply @hyp ({ψ⊃θ} U φ⊃ψ) (φ⊃ψ) (φ⊃ψ),
+    apply Hyp_x.in_U_φ,
+    apply @hyp ({ψ⊃θ} U φ⊃ψ U φ) (φ) (φ),
+    apply Hyp_x.in_U_φ,
 end 
 
 lemma union_Hyp_and : ∀ φ ψ θ : PPC_form, derives ({φ}∪{ψ}) θ → ((φ&ψ) ⊢ θ) :=
 begin 
     assume φ ψ θ h,
-    apply derives.impl_elim,
-    apply derives.impl_elim,
-    rewrite← singleton_insert,
-    apply derives.weak,
-    apply derives.impl_intro,
-    rewrite singleton_insert,
-    apply derives.impl_intro,
+    apply impl_elim,
+    apply impl_elim,
+    apply weak1,
+    apply impl_intro,
+    rewrite Hyp_x.singleton_insert,
+    apply impl_intro,
     exact h,
-    apply derives.and_eliml,
-    apply derive_refl,
-    apply derives.and_elimr,
-    apply derive_refl,
+    apply and_eliml,
+    apply derives_x.refl,
+    apply and_elimr,
+    apply derives_x.refl,
 end 
 
 lemma and_Hyp_union : ∀ φ ψ θ : PPC_form, ((φ&ψ) ⊢ θ) → derives ({φ}∪{ψ}) θ :=
 begin 
     assume φ ψ θ h,
-    apply derives.impl_elim,
-    apply derives.weak,
-    rewrite← singleton_insert,
-    apply derives.weak,
-    apply derives.impl_intro,
-    rewrite singleton_insert,
+    apply impl_elim,
+    apply weak,
+    apply weak1,
+    apply internal1_impl,
     exact h,
-    apply derives.and_intro,
+    apply and_intro,
+    apply weak,
+    apply derives_x.refl,
+    rewrite Hyp_x.union_comm,
     apply derives.weak,
-    apply derive_refl,
-    rewrite union_comm,
-    apply derives.weak,
-    apply derive_refl,
+    apply derives_x.refl,
 end 
+
+end derives_x

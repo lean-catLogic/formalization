@@ -3,8 +3,8 @@ import languages.PPC proof.PPC_natDeduct category_theory.category.preorder
 -- ⊢ is a preorder on the set of formulas 
 instance PPC_preorder : preorder PPC_form :=
 { le := λ φ ψ, φ ⊢ ψ,
-  le_refl := derive_refl,
-  le_trans := derive_trans,
+  le_refl := derives_x.refl,
+  le_trans := derives_x.trans,
 }
 
 -- Inter-derivability is an equivalence relation on formulas
@@ -12,7 +12,7 @@ instance PPC_setoid : setoid PPC_form :=
 { r := λ φ ψ, φ ⊢ ψ ∧ ψ ⊢ φ, 
   iseqv := ⟨ begin 
               assume φ, constructor, 
-              apply derive_refl, apply derive_refl 
+              apply derives_x.refl, apply derives_x.refl 
              end, 
             begin
               assume φ ψ h, cases h with φψ ψφ,
@@ -21,8 +21,8 @@ instance PPC_setoid : setoid PPC_form :=
             begin 
               assume φ ψ θ j k, cases j with φψ ψφ,
               cases k with ψθ θψ, constructor,
-              apply derive_trans, exact φψ, exact ψθ,
-              apply derive_trans, exact θψ, exact ψφ,
+              apply derives_x.trans, exact φψ, exact ψθ,
+              apply derives_x.trans, exact θψ, exact ψφ,
             end 
             ⟩ 
 } 
@@ -43,8 +43,8 @@ begin
   cases ψiffθ with ψθ θψ,
   apply propext,
   constructor,
-  assume φψ, apply derive_trans, exact φψ, exact ψθ,
-  assume φθ, apply derive_trans, exact φθ, exact θψ,
+  assume φψ, apply derives_x.trans, exact φψ, exact ψθ,
+  assume φθ, apply derives_x.trans, exact φθ, exact θψ,
 end
 lemma PPC_preorder_liftable2 :
   ∀ φ ψ θ : PPC_form, φ ⊣⊢ ψ → (φ ⊢ θ) = (ψ ⊢ θ) :=
@@ -53,8 +53,8 @@ begin
   cases φiffψ with φψ ψφ,
   apply propext,
   constructor,
-  assume φθ, apply derive_trans, exact ψφ, exact φθ,
-  assume ψθ, apply derive_trans, exact φψ, exact ψθ,
+  assume φθ, apply derives_x.trans, exact ψφ, exact φθ,
+  assume ψθ, apply derives_x.trans, exact φψ, exact ψθ,
 end 
 
 
@@ -78,7 +78,7 @@ instance PPC_poset : partial_order (PPC_eq) :=
                   assume a,
                   induction a with φ, 
                   dsimp[(≤),setoid.r,PPC_eq_order],
-                  apply derive_refl,refl,
+                  apply derives_x.refl,refl,
                 end),
   le_trans := 
                 (begin 
@@ -86,7 +86,7 @@ instance PPC_poset : partial_order (PPC_eq) :=
                   induction a with φ, induction b with ψ, induction c with θ,
                   dsimp[(≤),setoid.r,PPC_eq_order],
                   dsimp[(≤)] at h, dsimp[(≤)] at j, 
-                  apply derive_trans,
+                  apply derives_x.trans,
                   exact h, exact j,
                   refl, refl, refl,
                 end),
@@ -111,21 +111,21 @@ begin
       apply derives.and_intro,
       -- φ&ψ ⊢ φ
       apply @derives.and_eliml {φ&ψ} φ ψ,
-      apply derive_refl, -- φ&ψ ⊢ φ&ψ
+      apply derives_x.refl, -- φ&ψ ⊢ φ&ψ
       -- φ&ψ ⊢ ψ'
-      apply derive_trans,
+      apply derives_x.trans,
       apply @derives.and_elimr {φ&ψ} φ ψ,
-      apply derive_refl, -- φ&ψ ⊢ φ&ψ
+      apply derives_x.refl, -- φ&ψ ⊢ φ&ψ
       exact ψψ',
     -- Proof that φ&ψ' ⊢ φ&ψ
       apply derives.and_intro,
       -- φ&ψ ⊢ φ
       apply @derives.and_eliml {φ&ψ'} φ ψ',
-      apply derive_refl, -- φ&ψ' ⊢ φ&ψ'
+      apply derives_x.refl, -- φ&ψ' ⊢ φ&ψ'
       -- φ&ψ' ⊢ ψ
-      apply derive_trans,
+      apply derives_x.trans,
       apply @derives.and_elimr {φ&ψ'} φ ψ',
-      apply derive_refl, -- φ&ψ' ⊢ φ&ψ'
+      apply derives_x.refl, -- φ&ψ' ⊢ φ&ψ'
       exact ψ'ψ,
 end
 
@@ -138,20 +138,20 @@ begin
     constructor,
     -- Proof that φ&ψ ⊢ φ'&ψ
       apply derives.and_intro,
-      apply derive_trans,
+      apply derives_x.trans,
       apply @derives.and_eliml {φ&ψ} φ ψ,
-      apply derive_refl, -- φ&ψ ⊢ φ&ψ
+      apply derives_x.refl, -- φ&ψ ⊢ φ&ψ
       exact φφ',
       apply @derives.and_elimr {φ&ψ} φ ψ,
-      apply derive_refl, -- φ&ψ ⊢ φ&ψ
+      apply derives_x.refl, -- φ&ψ ⊢ φ&ψ
     -- Proof that φ'&ψ ⊢ φ&ψ
       apply derives.and_intro,
-      apply derive_trans,
+      apply derives_x.trans,
       apply @derives.and_eliml {φ'&ψ} φ' ψ,
-      apply derive_refl, -- φ'&ψ ⊢ φ'&ψ
+      apply derives_x.refl, -- φ'&ψ ⊢ φ'&ψ
       exact φ'φ,
       apply @derives.and_elimr {φ'&ψ} φ' ψ,
-      apply derive_refl, -- φ'&ψ ⊢ φ'&ψ
+      apply derives_x.refl, -- φ'&ψ ⊢ φ'&ψ
 end
 
 def and_eq : PPC_eq → PPC_eq → PPC_eq :=
@@ -167,12 +167,12 @@ begin
     cases h with ψψ' ψ'ψ,
     constructor,
       apply derives.impl_intro,
-      apply derive_trans_hyp,
-      exact (modus_ponens φ ψ),
+      apply derives_x.trans_hyp,
+      exact (derives_x.modus_ponens φ ψ),
       exact ψψ',
       apply derives.impl_intro,
-      apply derive_trans_hyp,
-      exact (modus_ponens φ ψ'),
+      apply derives_x.trans_hyp,
+      exact (derives_x.modus_ponens φ ψ'),
       exact ψ'ψ,
 end 
 
@@ -184,16 +184,16 @@ begin
     cases h with φφ' φ'φ,
     constructor,
       apply derives.impl_elim,
-      apply hypo_syll',
+      apply derives_x.hypo_syll',
       apply derives.impl_intro,
-      rewrite just_flip,
+      rewrite Hyp_x.just_flip,
       apply derives.weak,
       exact φ'φ,
       ---
       apply derives.impl_elim,
-      apply hypo_syll',
+      apply derives_x.hypo_syll',
       apply derives.impl_intro,
-      rewrite just_flip,
+      rewrite Hyp_x.just_flip,
       apply derives.weak,
       exact φφ',
 end 
@@ -203,3 +203,4 @@ def impl_eq : PPC_eq → PPC_eq → PPC_eq :=
   quot.lift₂ (λ φ ψ, ⦃φ ⊃ ψ⦄) impl_liftable1 impl_liftable2 
 
 notation (name := impl_eq) X `⊃⁼` Y := impl_eq X Y
+
