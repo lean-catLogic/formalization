@@ -62,6 +62,8 @@ end
 def PPC_eq_order   : PPC_eq → PPC_eq → Prop 
   := quot.lift₂ PPC_preorder.le PPC_preorder_liftable1 PPC_preorder_liftable2
 
+
+
 /- 
   Helpful lemma to allow us to use the natural deduction calculus
   when working on equivalence classes of formulas
@@ -99,6 +101,9 @@ instance PPC_poset : partial_order (PPC_eq) :=
                   constructor, exact h, exact j, refl, refl,
                 end)
 }
+
+instance PPC_eq_pre : preorder PPC_eq :=
+  @partial_order.to_preorder PPC_eq PPC_poset
 
 lemma and_liftable1 : ∀ φ ψ ψ' : PPC_form, 
   (ψ ⊣⊢ ψ') → ⦃φ & ψ⦄ = ⦃φ & ψ'⦄ :=
