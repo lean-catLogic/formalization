@@ -76,30 +76,30 @@ lemma preorder_lift_rewrite (φ ψ : PPC_form)
 instance PPC_poset : partial_order (PPC_eq) :=
 { le := PPC_eq_order,
   le_refl := 
-                (begin
-                  assume a,
-                  induction a with φ, 
-                  dsimp[(≤),setoid.r,PPC_eq_order],
-                  apply derives_x.refl,refl,
-                end),
+    begin
+      assume a,
+      induction a with φ, 
+      dsimp[(≤),setoid.r,PPC_eq_order],
+      apply derives_x.refl,refl,
+    end,
   le_trans := 
-                (begin 
-                  assume a b c h j,
-                  induction a with φ, induction b with ψ, induction c with θ,
-                  dsimp[(≤),setoid.r,PPC_eq_order],
-                  dsimp[(≤)] at h, dsimp[(≤)] at j, 
-                  apply derives_x.trans,
-                  exact h, exact j,
-                  refl, refl, refl,
-                end),
-  le_antisymm := ( 
-                begin
-                  assume a b h j,
-                  induction a with φ, induction b with ψ,
-                  apply quotient.sound,
-                  dsimp[(≈),setoid.r],dsimp[(≤)] at h, dsimp[(≤)] at j,
-                  constructor, exact h, exact j, refl, refl,
-                end)
+    begin 
+      assume a b c h j,
+      induction a with φ, induction b with ψ, induction c with θ,
+      dsimp[(≤),setoid.r,PPC_eq_order],
+      dsimp[(≤)] at h, dsimp[(≤)] at j, 
+      apply derives_x.trans,
+      exact h, exact j,
+      refl, refl, refl,
+    end,
+  le_antisymm :=  
+    begin
+      assume a b h j,
+      induction a with φ, induction b with ψ,
+      apply quotient.sound,
+      dsimp[(≈),setoid.r],dsimp[(≤)] at h, dsimp[(≤)] at j,
+      constructor, exact h, exact j, refl, refl,
+    end
 }
 
 instance PPC_eq_pre : preorder PPC_eq :=

@@ -38,7 +38,7 @@ instance : has_forcing unit :=
 
 lemma top_valid : () ⊩ ⊤ :=
 begin 
-  assume φ K K_struct,
+  assume K K_struct k,
   constructor,
 end 
 
