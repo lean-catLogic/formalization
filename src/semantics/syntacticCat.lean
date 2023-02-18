@@ -30,6 +30,18 @@ end synCat
 
 
 namespace synCat_tactics
+
+/-
+  To instantiate these tactics for a specific deductive calculus,
+  create a namespace with Form and Der specifically def'd (with
+  those exact variable names), and then
+
+  meta def lift_derive_XXX : tactic unit → tactic unit :=
+  @synCat_tactics.lift_derive_syn_cat Form Der
+-/
+variable {Form : Type}
+variable [Der : has_derives Form]
+
 /-
 Tactic for automatically proving that operations defined by induction
 on Form_eq respect ⊣⊢, because syn_cat is thin and therefore any
@@ -50,7 +62,7 @@ the derivation rules lifted onto equivalence classes
 Input should be of the form `[ apply XXX ]
 where XXX is a derivation rule of Der
 -/
-meta def lift_derive_syn_cat {Form : Type} [Der : has_derives Form]
+meta def lift_derive_syn_cat 
   (T : tactic unit) : tactic unit :=
   -- do
   --   goal ← tactic.target,

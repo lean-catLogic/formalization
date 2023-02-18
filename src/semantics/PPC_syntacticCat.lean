@@ -11,44 +11,23 @@ open specialCats
 
 instance ℂ_PPC : thin_cat PPC_eq := syn_cat
 
-/-
-Tactic for automatically proving that operations defined by induction
-on PPC_eq respect ⊣⊢, because ℂ_PPC is thin and therefore any
-two parallel arrows are equal
--/ 
-meta def by_ℂ_thin : tactic unit :=
-`[ repeat{assume _}, repeat{ repeat{ apply funext, assume _},apply thin_cat.K }]
+namespace ℂ_PPC_tactics
 
-meta def repeat_assume_PPC_eq_induct : tactic unit :=
-`[ 
-  assume X : PPC_eq,
-  try {repeat_assume_PPC_eq_induct},
-  induction X with φ
-  ]
+def Form : Type := PPC_Form
+def Der : has_derives Form := PPC_Der
 /-
 Tactic for doing constructions in ℂ_PPC which are actually just
 the derivation rules of the natural deduction calculus lifted onto
 equivalence classes
-Input should be of the form `[ apply derives.XXX ]
+Input should be of the form `[ apply XXX ]
+where XXX is a rule of PPC_Der
 -/
-meta def lift_derive_ℂ_PPC ( T : tactic unit) : tactic unit :=
-  -- @lift_derive_syn_cat PPC_Form PPC_Der T
-`[ 
-   -- Assume all the ℂ_PPC objects, and write them as ⦃φ⦄ for some φ
-   repeat_assume_PPC_eq_induct,
-   -- Introduce assumed morphisms
-   repeat {assume Y},
-   -- Change the goal to be about constructing a derivation instead of a
-   -- ℂ_PPC morphism
-   apply syn_hom,
-   -- Apply the input tactic, proving the derivation
-   T, 
-   -- Clean up
-   repeat {apply PPC_Der.derive_refl},
-   repeat {apply @derives_of_hom PPC_Form PPC_Der, assumption},
-   -- Prove this coherent w.r.t the ⊣⊢equiv relation, using thinness of ℂ_PPC 
-   by_ℂ_thin ]
+meta def lift_derive_ℂ_PPC : tactic unit → tactic unit :=
+  @synCat_tactics.lift_derive_syn_cat Form Der
 
+end ℂ_PPC_tactics
+
+open ℂ_PPC_tactics
 
 -- ℂ_PPC has finite products
 instance : FP_cat PPC_eq :=
