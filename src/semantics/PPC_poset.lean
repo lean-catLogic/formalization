@@ -5,7 +5,7 @@ namespace PPC_synPoset
 open PPC_defn
 open PPC_defn.PPC_derives
 open PPC_has_derives
-open synacticPoset
+open synPoset
 
 def PPC_Der := PPC_has_derives.PPC_Der
 def derive_refl := PPC_Der.derive_refl

@@ -1,6 +1,6 @@
 import languages.deductive category_theory.category.preorder
 
-namespace synacticPoset
+namespace synPoset
 
 variable {Form : Type}
 -- variable {Der : has_derives Form}
@@ -39,6 +39,9 @@ instance syn_setoid [Der : has_derives Form] : setoid Form :=
 -- notation (name:=syn_setoid.r) φ `⊣⊢` ψ :78 := syn_setoid.r φ ψ 
 
 def Form_eq [Der : has_derives Form] : Type := @quot Form (⊣⊢)
+def Form_eq_x (F : Type) [Der : has_derives F] : Type := @Form_eq F Der
+
+notation (name:=Form_eq_explicit) F ` _eq`:max := Form_eq_x F
 
 def Form_eq_in [Der : has_derives Form] : Form → @Form_eq Form Der := quot.mk (⊣⊢) 
 
@@ -67,7 +70,7 @@ begin
 end 
 
 def Form_eq_order [Der : has_derives Form] : @Form_eq Form Der → @Form_eq Form Der → Prop 
-  := quot.lift₂ synacticPoset.syn_preorder.le syn_preorder_liftable1 syn_preorder_liftable2
+  := quot.lift₂ synPoset.syn_preorder.le syn_preorder_liftable1 syn_preorder_liftable2
 
 
 
@@ -100,8 +103,9 @@ instance syn_poset [Der : has_derives Form] : partial_order Form_eq :=
     end
 }
 
-end synacticPoset
+instance syn_eq_pre {Form : Type} [Der : has_derives Form] : preorder (Form_eq_x Form) :=
+  @partial_order.to_preorder (Form_eq_x Form) synPoset.syn_poset
+
+end synPoset
 
 
--- instance syn_eq_pre [Der : has_derives Form] : preorder (@Form_eq Form Der) :=
---   @partial_order.to_preorder Form_eq syntacticPoset.syn_poset

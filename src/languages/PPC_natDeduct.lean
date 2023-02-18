@@ -272,8 +272,9 @@ begin
     apply hyp φ, find_it,
 end 
 
--- lemma union_Hyp_and : ∀ φ ψ θ : PPC_Form, PPC_derives ({φ}∪{ψ}) θ → ((φ&ψ) ⊢ θ) :=
--- begin 
+lemma union_Hyp_and : ∀ φ ψ θ : PPC_Form, PPC_derives ({φ}∪{ψ}) θ → ((φ&ψ) ⊢ θ) :=
+begin 
+    sorry
 --     assume φ ψ θ h,
 --     apply impl_elim,
 --     apply impl_elim,
@@ -286,10 +287,11 @@ end
 --     apply PPC_derives_x.refl,
 --     apply and_elimr,
 --     apply PPC_derives_x.refl,
--- end 
+end 
 
--- lemma and_Hyp_union : ∀ φ ψ θ : PPC_Form, ((φ&ψ) ⊢ θ) → PPC_derives ({φ}∪{ψ}) θ :=
--- begin 
+lemma and_Hyp_union : ∀ φ ψ θ : PPC_Form, ((φ&ψ) ⊢ θ) → PPC_derives ({ψ,φ}) θ :=
+begin 
+    sorry
 --     assume φ ψ θ h,
 --     apply impl_elim,
 --     apply weak,
@@ -302,6 +304,6 @@ end
 --     rewrite PPC_Hyp_x.union_comm,
 --     apply PPC_derives.weak,
 --     apply PPC_derives_x.refl,
--- end 
+end 
 
 end PPC_derives_x
