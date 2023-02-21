@@ -1,4 +1,4 @@
-import languages.deductive category_theory.category.preorder
+import deduction.deduction category_theory.category.preorder
 
 namespace synPoset
 

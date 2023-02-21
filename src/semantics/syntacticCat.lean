@@ -1,4 +1,4 @@
-import semantics.syntacticPoset CT.CCC category_theory.category.preorder
+import semantics.syntacticPoset categoryTheory.CCC category_theory.category.preorder
 open category_theory
 
 namespace synCat

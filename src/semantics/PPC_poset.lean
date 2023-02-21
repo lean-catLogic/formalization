@@ -1,4 +1,4 @@
-import semantics.syntacticPoset languages.PPC_natDeduct
+import semantics.syntacticPoset deduction.PPC_natDeduct
 
 namespace PPC_synPoset
 

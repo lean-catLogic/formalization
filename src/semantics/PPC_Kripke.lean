@@ -1,4 +1,4 @@
-import languages.PPC_natDeduct category_theory.category.preorder
+import deduction.PPC_natDeduct category_theory.category.preorder
 
 namespace forcing_notation
 class has_forcing (X : Type) (Form : Type) :=

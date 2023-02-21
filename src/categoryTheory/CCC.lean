@@ -1,4 +1,4 @@
-import CT.thin
+import categoryTheory.thin
 universes v u u₂ v₂
 open category_theory
 

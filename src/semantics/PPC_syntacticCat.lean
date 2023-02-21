@@ -1,4 +1,4 @@
-import semantics.syntacticCat semantics.PPC_poset CT.CCC category_theory.category.preorder
+import semantics.syntacticCat semantics.PPC_poset categoryTheory.CCC category_theory.category.preorder
 open category_theory
 
 open PPC_defn

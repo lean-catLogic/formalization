@@ -1,4 +1,4 @@
-import languages.deductive data.set.basic
+import deduction.deduction data.set.basic
 
 namespace PPC_defn
 
