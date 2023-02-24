@@ -30,6 +30,8 @@ end synCat
 
 namespace synCat_tactics
 
+  open tactic
+  open nat
   /-
     To instantiate these tactics for a specific deductive calculus,
     create a namespace with Form and Der specifically def'd (with
@@ -49,36 +51,48 @@ namespace synCat_tactics
   meta def by_syn_thin {Form : Type} [Der : has_derives Form] : tactic unit :=
   `[ repeat{assume _}, repeat{ repeat{ apply funext, assume _},apply thin_cat.K }]
 
-  meta def repeat_assume_Form_eq_induct {Form : Type} [Der : has_derives Form] : tactic unit :=
-  `[ 
-    assume X : @synPoset.Form_eq Form Der,
-    try {repeat_assume_Form_eq_induct},
-    induction X with φ
-  ]
+
+  meta def repeat_assume : nat → tactic (list expr)
+  | 0 := return []
+  | (succ n) :=
+    (do
+      nm ← mk_fresh_name,
+      e1 ← intro nm,
+      rest ← repeat_assume n,
+      return $ e1::rest)
+    <|> (return [])
+
+  meta def induct_all : list expr → tactic unit :=
+    list.foldr (λ e rest, do h ← induction e, rest) skip
+
+  meta def cleanup : tactic unit :=
+    `[ 
+      repeat {
+        apply Der.derive_refl
+        <|> {apply @derives_of_hom Form Der, assumption},
+        
+      }, 
+      @by_syn_thin Form Der ]
 
   /-
   Tactic for doing constructions in syn_cat which are actually just
   the derivation rules lifted onto equivalence classes
-  Input should be of the form `[ apply XXX ]
+  First two arguments are the number of objects and morphisms to assume
+  Tactic input should be of the form `[ apply XXX ]
   where XXX is a derivation rule of Der
   -/
-  meta def lift_derive_syn_cat 
-    (T : tactic unit) : tactic unit :=
-  `[ 
-    -- Assume all the ℂ_PPC objects, and write them as ⦃φ⦄ for some φ
-    @repeat_assume_Form_eq_induct Form Der,
-    -- Introduce assumed morphisms
-    repeat {assume Y},
-    -- Change the goal to be about constructing a derivation instead of a
-    -- ℂ_PPC morphism
-    apply syn_hom,
-    -- Apply the input tactic, proving the derivation
-    T, 
-    -- Clean up
-    repeat {apply PPC_Der.derive_refl},
-    repeat {apply @derives_of_hom Form Der, assumption},
-    -- Prove this coherent w.r.t the ⊣⊢equiv relation, using thinness of ℂ_PPC 
-    @by_syn_thin Form Der 
-  ]
+  meta def lift_derive_syn_cat' (numobjs : nat) (nummor : nat) (T : tactic unit) : tactic unit :=
+  do
+    objs ← repeat_assume numobjs,
+    -- trace (list.length objs),
+    induct_all objs,
+    morphs ← repeat_assume nummor,
+    applyc `synCat.syn_hom,
+    trace_state,
+    trace "-- BEGIN USE TACTIC --",
+    T,
+    trace "-- END USE TACTIC --",
+    -- trace_state,
+    @cleanup Form Der
 
 end synCat_tactics

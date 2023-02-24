@@ -22,8 +22,10 @@ equivalence classes
 Input should be of the form `[ apply XXX ]
 where XXX is a rule of PPC_Der
 -/
-meta def lift_derive_ℂ_PPC : tactic unit → tactic unit :=
-  @synCat_tactics.lift_derive_syn_cat Form Der
+meta def lift_derive_ℂ_PPC (numobjs nummorphs : nat) : tactic unit → tactic unit :=
+  @synCat_tactics.lift_derive_syn_cat' Form Der numobjs nummorphs
+
+
 
 end ℂ_PPC_tactics
 
@@ -33,13 +35,13 @@ open ℂ_PPC_tactics
 instance : FP_cat PPC_eq :=
 {
   unit := syn_obj PPC_Form.top,
-  term := by lift_derive_ℂ_PPC `[ apply truth ], -- φ ⊢ ⊤
+  term := by lift_derive_ℂ_PPC 1 0 `[ apply truth ], -- φ ⊢ ⊤
   unit_η := λ X f, by apply thin_cat.K,
   prod := (&⁼),
-  pr1 := by lift_derive_ℂ_PPC `[ apply and_eliml ], -- φ & ψ ⊢ φ
-  pr2 := by lift_derive_ℂ_PPC `[ apply and_elimr ], -- φ & ψ ⊢ ψ
+  pr1 := by lift_derive_ℂ_PPC 2 0 `[ apply and_eliml ], -- φ & ψ ⊢ φ
+  pr2 := by lift_derive_ℂ_PPC 2 0 `[ apply and_elimr ], -- φ & ψ ⊢ ψ
                 -- If θ ⊢ φ and θ ⊢ ψ, then θ ⊢ φ & ψ
-  pair := by lift_derive_ℂ_PPC `[ apply and_intro ],
+  pair := by lift_derive_ℂ_PPC 3 2 `[ apply and_intro ],
   prod_β1 := λ X Y Z f g, by apply thin_cat.K,
   prod_β2 := λ X Y Z f g, by apply thin_cat.K,
   prod_η :=  λ X Y, by apply thin_cat.K,
@@ -49,11 +51,11 @@ instance : FP_cat PPC_eq :=
 instance : CC_cat PPC_eq := 
 {
   exp := (⊃⁼),
-  eval := by lift_derive_ℂ_PPC `[ 
+  eval := by lift_derive_ℂ_PPC 2 0 `[ 
                 -- φ⊃ψ & φ ⊢ ψ
                 apply PPC_derives_x.union_Hyp_and,
                 apply PPC_derives_x.modus_ponens ],
-  curry := by lift_derive_ℂ_PPC `[ 
+  curry := by lift_derive_ℂ_PPC 3 1 `[ 
                 -- If φ & ψ ⊢ θ, then φ ⊢ ψ ⊃ θ
                 apply impl_intro,
                 apply PPC_derives_x.and_Hyp_union ],
