@@ -41,7 +41,7 @@ namespace synPoset
 
   notation (name:=Form_eq_explicit) F ` _eq`:max := Form_eq_x F
 
-  def Form_eq_in [Der : has_derives Form] : Form → @Form_eq Form Der := quot.mk (⊣⊢) 
+  def Form_eq_in [Der : has_derives Form] : Form → Form _eq := quot.mk (⊣⊢) 
 
   notation (name:=PPC_eq_in) ⦃φ⦄ := Form_eq_in φ
 
@@ -101,8 +101,8 @@ namespace synPoset
       end
   }
 
-  instance syn_eq_pre {Form : Type} [Der : has_derives Form] : preorder (Form_eq_x Form) :=
-    @partial_order.to_preorder (Form_eq_x Form) synPoset.syn_poset
+  instance syn_eq_pre {Form : Type} [Der : has_derives Form] : preorder (Form _eq) :=
+    @partial_order.to_preorder (Form _eq) synPoset.syn_poset
 
 end synPoset
 
