@@ -23,16 +23,12 @@ namespace MPPC_defn
     instance : has_singleton MPPC_Form MPPC_Hyp := infer_instance
     instance : has_mem MPPC_Form MPPC_Hyp := infer_instance
     instance : has_insert MPPC_Form MPPC_Hyp := infer_instance
-
-
-    inductive isModal : MPPC_Hyp → Prop
-    | modalEmpty : isModal ∅
-    | modalInsert : ∀ (Φ : MPPC_Hyp) (φ : MPPC_Form), isModal Φ → isModal(insert (◇φ) Φ) 
-    open isModal
+    instance : has_emptyc MPPC_Hyp := infer_instance
+    instance : is_lawful_singleton MPPC_Form MPPC_Hyp := infer_instance
 
     inductive MPPC_derives : MPPC_Hyp → MPPC_Form → Prop 
-    | hyp {Φ : MPPC_Hyp} (φ : MPPC_Form) (φ ∈ Φ)    
-        : MPPC_derives Φ φ
+    | hyp {Φ : MPPC_Hyp} {φ : MPPC_Form}  
+        : (φ ∈ Φ) →  MPPC_derives Φ φ
     | truth {Φ}                               
         : MPPC_derives Φ ⊤ 
     | and_intro {Φ} {φ ψ : MPPC_Form}    
@@ -47,13 +43,11 @@ namespace MPPC_defn
         : MPPC_derives Φ (φ ⊃ ψ) → MPPC_derives Φ φ → MPPC_derives Φ ψ
     | weak {Φ Ψ : MPPC_Hyp} {φ : MPPC_Form}
         : MPPC_derives Φ φ → MPPC_derives (Φ ∪ Ψ) φ
-    | nec {Φ : MPPC_Hyp} {φ : MPPC_Form}
-        : isModal Φ → MPPC_derives Φ φ → MPPC_derives Φ ◇φ
-    | K {Φ : MPPC_Hyp} (φ) {ψ : MPPC_Form}
-        : MPPC_derives Φ (◇(φ ⊃ ψ)) → MPPC_derives Φ (◇φ) → MPPC_derives Φ (◇ψ)
-    | Pure {Φ : MPPC_Hyp} {φ : MPPC_Form}
+    | dmap {φ ψ : MPPC_Form}
+        : MPPC_derives {φ} ψ → MPPC_derives {◇φ} ◇ψ
+    | dpure {Φ : MPPC_Hyp} {φ : MPPC_Form}
         : MPPC_derives Φ φ → MPPC_derives Φ (◇φ)
-    | Join {Φ : MPPC_Hyp} {φ : MPPC_Form}
+    | djoin {Φ : MPPC_Hyp} {φ : MPPC_Form}
         : MPPC_derives Φ (◇◇φ) → MPPC_derives Φ (◇φ)
     open MPPC_derives
 
@@ -68,7 +62,6 @@ namespace MPPC_has_derives
 
     open MPPC_defn
     open MPPC_defn.MPPC_derives
-
     lemma internal1_impl : ∀ {φ ψ : MPPC_Form}, MPPC_derives {ψ} φ → MPPC_derives ∅ (ψ ⊃ φ) :=
     begin 
         assume φ ψ h,
@@ -89,15 +82,11 @@ namespace MPPC_has_derives
         apply weak,
         exact h,
     end
+    lemma MPPC_derive_refl : ∀ φ, MPPC_derives {φ} φ :=
+      λ φ, hyp (set.mem_singleton φ)
 
-    instance MPPC_Der : has_derives MPPC_Form :=
-    ⟨ MPPC_Hyp , 
-    MPPC_derives , 
-    begin 
-        assume φ,
-        apply @hyp {φ} φ,
-        apply set.mem_singleton,
-    end, 
+    lemma MPPC_derive_trans : ∀ (φ ψ θ : MPPC_Form),
+        MPPC_derives {φ} ψ → MPPC_derives {ψ} θ → MPPC_derives {φ} θ :=
     begin
         assume φ ψ θ hφψ hψθ,
         have helper : MPPC_derives {φ} (ψ ⊃ θ), 
@@ -108,8 +97,15 @@ namespace MPPC_has_derives
         exact helper,
         exact hφψ,
     end
-    ⟩ 
 
+
+    instance MPPC_Der : has_derives MPPC_Form :=
+      ⟨   
+        MPPC_Hyp, 
+        MPPC_derives, 
+        MPPC_derive_refl, 
+        MPPC_derive_trans
+      ⟩ 
 
 end MPPC_has_derives
 
@@ -118,6 +114,12 @@ end MPPC_has_derives
 namespace MPPC_Hyp_x
 
     open MPPC_defn
+
+    @[simp] lemma lawful_singleton : ∀ {φ : MPPC_Form},
+        MPPC_Hyp.has_insert.insert φ MPPC_Hyp.has_emptyc.emptyc =
+        MPPC_Hyp.has_singleton.singleton φ := 
+        MPPC_defn.MPPC_Hyp.is_lawful_singleton.insert_emptyc_eq
+
 
     meta def find_it : tactic unit :=
         `[ repeat {{left,refl} <|> right}, try{apply set.mem_singleton}  ]
@@ -159,15 +161,15 @@ namespace MPPC_derives_x
         exact hΦφ,
     end 
 
-    lemma modus_ponens : ∀ φ ψ : MPPC_Form, MPPC_derives ({φ⊃ψ}∪{φ}) ψ :=
-    begin 
+    lemma modus_ponens : ∀ φ ψ : MPPC_Form, MPPC_derives ({φ⊃ψ,φ}) ψ :=
+    begin
         assume φ ψ,
         apply impl_elim,
         apply weak,
-        apply MPPC_has_derives.MPPC_Der.derive_refl,
-        rewrite set.union_comm,
+        apply MPPC_derive_refl,
+        rewrite Hyp_twoElt_comm,
         apply weak,
-        apply MPPC_has_derives.MPPC_Der.derive_refl,
+        apply MPPC_derive_refl,
     end 
 
     -- -- lemma hypo_syll : ∀ φ ψ θ, (φ ⊃ ψ) ⊢ ((ψ ⊃ θ) ⊃ (φ ⊃ θ)) := sorry
@@ -178,10 +180,10 @@ namespace MPPC_derives_x
         apply impl_intro,
         apply impl_intro,
         apply impl_elim ψ,
-        apply hyp (ψ ⊃ θ), find_it,
+        apply hyp, find_it,
         apply impl_elim φ,
-        apply hyp (φ⊃ψ), find_it,
-        apply hyp φ, find_it,
+        apply hyp, find_it,
+        apply hyp, find_it,
     end 
 
     lemma union_Hyp_and : ∀ φ ψ θ : MPPC_Form, MPPC_derives ({φ,ψ}) θ → ((φ&ψ) ⊢ θ) :=
@@ -195,9 +197,9 @@ namespace MPPC_derives_x
         apply impl_intro φ,
         exact h,
         apply and_elimr,
-        apply MPPC_has_derives.MPPC_Der.derive_refl,
+        apply MPPC_derive_refl,
         apply and_eliml,
-        apply MPPC_has_derives.MPPC_Der.derive_refl,
+        apply MPPC_derive_refl,
     end 
 
     lemma and_Hyp_union : ∀ φ ψ θ : MPPC_Form, ((φ&ψ) ⊢ θ) → MPPC_derives ({ψ,φ}) θ :=
@@ -211,22 +213,23 @@ namespace MPPC_derives_x
         apply and_intro,
         rw Hyp_twoElt_comm,
         apply weak,
-        apply MPPC_has_derives.MPPC_Der.derive_refl,
+        apply MPPC_derive_refl,
         apply MPPC_derives.weak,
-        apply MPPC_has_derives.MPPC_Der.derive_refl,
+        apply MPPC_derive_refl,
     end 
 
 end MPPC_derives_x
 
 
-open MPPC_defn
-open MPPC_defn.MPPC_derives
-open MPPC_has_derives
-#check MPPC_has_derives.MPPC_Der
-example : ∀ φ, MPPC_has_derives.MPPC_Der.derives ∅ (φ ⊃ ◇φ) :=
-begin
-    assume φ,
-    apply impl_intro,
-    apply Pure,
-    apply MPPC_has_derives.MPPC_Der.derive_refl,
-end
+-- open MPPC_defn
+-- open MPPC_defn.MPPC_derives
+-- open MPPC_has_derives
+
+-- example : ∀ φ, MPPC_has_derives.MPPC_Der.derives ∅ (φ ⊃ ◇φ) :=
+-- begin
+--     assume φ,
+--     apply impl_intro,
+--     apply dpure,
+--     simp[MPPC_Hyp_x.lawful_singleton],
+--     exact (MPPC_derive_refl φ),
+-- end

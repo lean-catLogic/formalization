@@ -23,7 +23,7 @@ Input should be of the form `[ apply XXX ]
 where XXX is a rule of MPPC_Der
 -/
 meta def lift_derive_ℂ_MPPC (numobjs nummorphs : nat) : tactic unit → tactic unit :=
-  @synCat_tactics.lift_derive_syn_cat' Form Der numobjs nummorphs
+  @synCat_tactics.lift_derive_syn_cat Form Der numobjs nummorphs
 
 
 
@@ -66,13 +66,13 @@ instance : CC_cat MPPC_eq :=
 -- The ◇ modality defines a monad on ℂ_MPPC 
 def diamond_monad : category_theory.monad MPPC_eq := {
   obj := diamond_eq,
-  map := by lift_derive_ℂ_MPPC 2 1 `[ apply diamond_map ],
+  map := by lift_derive_ℂ_MPPC 2 1 `[ apply dmap ],
   η'  := ⟨
-          by lift_derive_ℂ_MPPC 1 0 `[ apply Pure ],
+          by lift_derive_ℂ_MPPC 1 0 `[ apply dpure ],
           λ X Y f, by apply thin_cat.K,
          ⟩,
   μ' :=  ⟨ 
-          by lift_derive_ℂ_MPPC 1 0 `[ apply Join ],
+          by lift_derive_ℂ_MPPC 1 0 `[ apply djoin ],
           λ X Y f, by apply thin_cat.K,
          ⟩,
 }

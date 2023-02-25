@@ -117,20 +117,6 @@ def impl_eq : MPPC_eq → MPPC_eq → MPPC_eq :=
 
 notation (name := impl_eq) X `⊃⁼` Y := impl_eq X Y
 
-lemma diamond_map : ∀ φ ψ, φ ⊢ ψ → (◇φ) ⊢ ◇ψ :=
-begin
-  assume φ ψ h,
-  apply K φ,
-  apply weak1,
-  apply nec,
-  exact isModal.modalEmpty,
-  apply impl_intro,
-  dsimp[(⊢),has_derives.derives,MPPC_Der] at h,
-  rw MPPC_Hyp_x.insert_is_union_singleton,
-  rw MPPC_has_derives.empty_union at h,
-  exact h,
-  apply derive_refl,
-end
 
 lemma diamond_liftable : ∀ φ φ' : MPPC_Form,
   (φ ⊣⊢ φ') → ⦃◇φ⦄ = ⦃◇φ'⦄ :=
@@ -139,9 +125,9 @@ lemma diamond_liftable : ∀ φ φ' : MPPC_Form,
     apply quotient.sound,
     cases h with φφ' φ'φ,
     constructor,
-    apply diamond_map,
+    apply dmap,
     exact φφ',
-    apply diamond_map,
+    apply dmap,
     exact φ'φ,
   end
 
