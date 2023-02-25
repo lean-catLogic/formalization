@@ -70,21 +70,40 @@ namespace synPoset
   def Form_eq_order [Der : has_derives Form] : @Form_eq Form Der → @Form_eq Form Der → Prop 
     := quot.lift₂ synPoset.syn_preorder.le syn_preorder_liftable1 syn_preorder_liftable2
 
+  open tactic
+  open nat
 
+  meta def repeat_assume : list name → tactic (list (name × expr))
+  | [] := return []
+  | (nm::nms) :=
+    (do
+      temp_nm ← mk_fresh_name,
+      e ← intro temp_nm,
+      rest ← repeat_assume nms,
+      return $ (nm,e)::rest)
+    <|> (return [])
+
+  meta def repeat_then_assume_induct (T : tactic unit) (N : list name) : tactic unit :=
+    do
+      l ← repeat_assume N,
+      T,
+      let cmb := λ x y (res : tactic unit), (induction y [x]) >> res,
+      list.foldr (function.uncurry cmb) skip l
+
+  meta def repeat_assume_induct : list name →  tactic unit :=
+    repeat_then_assume_induct skip
 
   instance syn_poset [Der : has_derives Form] : partial_order Form_eq :=
   { le := @Form_eq_order Form Der,
     le_refl := 
       begin
-        assume a,
-        induction a with φ, 
+        repeat_assume_induct [`φ],
         dsimp[(≤),setoid.r,Form_eq_order],
         apply Der.derive_refl,refl,
       end,
     le_trans := 
       begin 
-        assume a b c h j,
-        induction a with φ, induction b with ψ, induction c with θ,
+        repeat_then_assume_induct `[ assume h j ] [`φ,`ψ,`θ],
         dsimp[(≤),setoid.r,Form_eq_order],
         dsimp[(≤)] at h, dsimp[(≤)] at j, 
         apply Der.derive_trans,
@@ -93,8 +112,7 @@ namespace synPoset
       end,
     le_antisymm :=  
       begin
-        assume a b h j,
-        induction a with φ, induction b with ψ,
+        repeat_then_assume_induct `[ assume h j ] [`φ,`ψ],
         apply quotient.sound,
         dsimp[(≈),setoid.r],dsimp[(≤)] at h, dsimp[(≤)] at j,
         constructor, exact h, exact j, refl, refl,

@@ -22,7 +22,7 @@ namespace synCat
 
   def derives_of_hom [Der : has_derives Form] {φ ψ : Form} (f : syn_obj φ ⟶ syn_obj ψ): 
     Der.derives (Der.singleHyp.singleton φ) ψ :=
-    Exists.fst(thin_cat.preorder_cat_full f)
+    le_of_hom f
 
 end synCat
 
@@ -63,7 +63,7 @@ namespace synCat_tactics
     <|> (return [])
 
   meta def induct_all : list expr → tactic unit :=
-    list.foldr (λ e rest, do h ← induction e, rest) skip
+    list.foldr (λ e rest, induction e >> rest) skip
 
   meta def cleanup : tactic unit :=
     `[ 
@@ -81,7 +81,7 @@ namespace synCat_tactics
   Tactic input should be of the form `[ apply XXX ]
   where XXX is a derivation rule of Der
   -/
-  meta def lift_derive_syn_cat' (numobjs : nat) (nummor : nat) (T : tactic unit) : tactic unit :=
+  meta def lift_derive_syn_cat (numobjs : nat) (nummor : nat) (T : tactic unit) : tactic unit :=
   do
     objs ← repeat_assume numobjs,
     -- trace (list.length objs),
