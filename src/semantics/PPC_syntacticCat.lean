@@ -6,6 +6,9 @@ open PPC_defn.PPC_derives
 open PPC_synPoset
 open synCat
 
+meta def trace_goal (iden : string) : tactic unit :=
+  synPoset_tactics.trace_goal iden
+
 
 open specialCats
 
@@ -13,17 +16,20 @@ instance ℂ_PPC : thin_cat PPC_eq := syn_cat
 
 namespace ℂ_PPC_tactics
 
-def Form : Type := PPC_Form
-def Der : has_derives Form := PPC_Der
-/-
-Tactic for doing constructions in ℂ_PPC which are actually just
-the derivation rules of the natural deduction calculus lifted onto
-equivalence classes
-Input should be of the form `[ apply XXX ]
-where XXX is a rule of PPC_Der
--/
-meta def lift_derive_ℂ_PPC (numobjs nummorphs : nat) : tactic unit → tactic unit :=
-  @synCat_tactics.lift_derive_syn_cat' Form Der numobjs nummorphs
+  def Form : Type := PPC_Form
+  def Der : has_derives Form := PPC_Der
+  /-
+  Tactic for doing constructions in ℂ_PPC which are actually just
+  the derivation rules of the natural deduction calculus lifted onto
+  equivalence classes
+  First two arguments are the number of objects and morphisms to assume
+  Tactic input should usually be of the form `[ apply XXX ]
+  where XXX is a rule of PPC_Der
+  -/
+  #check synCat_tactics.lift_derive_syn_cat
+  
+  meta def lift_derive_ℂ_PPC  : nat → nat → tactic unit →  tactic unit :=
+    @synCat_tactics.lift_derive_syn_cat Form Der
 
 
 
@@ -53,12 +59,19 @@ instance : CC_cat PPC_eq :=
   exp := (⊃⁼),
   eval := by lift_derive_ℂ_PPC 2 0 `[ 
                 -- φ⊃ψ & φ ⊢ ψ
-                apply PPC_derives_x.union_Hyp_and,
-                apply PPC_derives_x.modus_ponens ],
+                trace_goal "eval0",
+                apply PPC_derives_x.union_Hyp_and, 
+                trace_goal "eval1",
+                apply PPC_derives_x.modus_ponens,
+                trace_goal "eval2"
+              ],
   curry := by lift_derive_ℂ_PPC 3 1 `[ 
-                -- If φ & ψ ⊢ θ, then φ ⊢ ψ ⊃ θ
+                -- If φ_0 & φ_1 ⊢ φ_2, then φ_0 ⊢ φ_1 ⊃ φ_2
+                trace_goal "curry0",
                 apply impl_intro,
-                apply PPC_derives_x.and_Hyp_union ],
+                trace_goal "curry1",
+                apply PPC_derives_x.and_Hyp_union,
+                trace_goal "curry2" ],
   curry_β := λ {X Y Z} u, by apply thin_cat.K,
   curry_η := λ {X Y Z} v, by apply thin_cat.K,
 }

@@ -43,36 +43,20 @@ namespace synCat_tactics
   variable {Form : Type}
   variable [Der : has_derives Form]
 
-  /-
-  Tactic for automatically proving that operations defined by induction
-  on Form_eq respect ⊣⊢, because syn_cat is thin and therefore any
-  two parallel arrows are equal
-  -/ 
-  meta def by_syn_thin {Form : Type} [Der : has_derives Form] : tactic unit :=
-  `[ repeat{assume _}, repeat{ repeat{ apply funext, assume _},apply thin_cat.K }]
-
-
-  meta def repeat_assume : nat → tactic (list expr)
-  | 0 := return []
-  | (succ n) :=
-    (do
-      nm ← mk_fresh_name,
-      e1 ← intro nm,
-      rest ← repeat_assume n,
-      return $ e1::rest)
-    <|> (return [])
-
-  meta def induct_all : list expr → tactic unit :=
-    list.foldr (λ e rest, induction e >> rest) skip
-
-  meta def cleanup : tactic unit :=
+  meta def cleanup {Form : Type} [Der : has_derives Form] : tactic unit :=
     `[ 
       repeat {
         apply Der.derive_refl
         <|> {apply @derives_of_hom Form Der, assumption},
         
       }, 
-      @by_syn_thin Form Der ]
+      thin_cat.by_thin ]
+
+  def varFormat (baseName : name) (i : nat) : name :=
+    name.append_suffix baseName (nat.has_repr.repr i)
+
+  def gen_nameList (baseName : name) (n : nat) : list name := 
+    list.map (varFormat baseName) (list.range n)
 
   /-
   Tactic for doing constructions in syn_cat which are actually just
@@ -83,16 +67,14 @@ namespace synCat_tactics
   -/
   meta def lift_derive_syn_cat (numobjs : nat) (nummor : nat) (T : tactic unit) : tactic unit :=
   do
-    objs ← repeat_assume numobjs,
-    -- trace (list.length objs),
-    induct_all objs,
-    morphs ← repeat_assume nummor,
+    synPoset_tactics.repeat_assume_induct (gen_nameList `φ_ numobjs),
+    synPoset_tactics.repeat_assume (gen_nameList `f_ nummor),
     applyc `synCat.syn_hom,
-    trace_state,
+    synPoset_tactics.trace_goal "BEGIN",
     trace "-- BEGIN USE TACTIC --",
     T,
     trace "-- END USE TACTIC --",
-    -- trace_state,
-    @cleanup Form Der
+    synPoset_tactics.trace_goal "END",
+    @cleanup Form Der 
 
 end synCat_tactics
