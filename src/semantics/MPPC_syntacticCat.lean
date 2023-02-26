@@ -25,7 +25,8 @@ where XXX is a rule of MPPC_Der
 meta def lift_derive_ℂ_MPPC (numobjs nummorphs : nat) : tactic unit → tactic unit :=
   @synCat_tactics.lift_derive_syn_cat Form Der numobjs nummorphs
 
-
+meta def trace_goal : string → tactic unit :=
+  synPoset_tactics.trace_goal
 
 end ℂ_MPPC_tactics
 
@@ -53,12 +54,18 @@ instance : CC_cat MPPC_eq :=
   exp := (⊃⁼),
   eval := by lift_derive_ℂ_MPPC 2 0 `[ 
                 -- φ⊃ψ & φ ⊢ ψ
+                trace_goal "eval0",
                 apply MPPC_derives_x.union_Hyp_and,
-                apply MPPC_derives_x.modus_ponens ],
+                trace_goal "eval1",
+                apply MPPC_derives_x.modus_ponens,
+                trace_goal "eval2" ],
   curry := by lift_derive_ℂ_MPPC 3 1 `[ 
                 -- If φ & ψ ⊢ θ, then φ ⊢ ψ ⊃ θ
+                trace_goal "curry0",
                 apply impl_intro,
-                apply MPPC_derives_x.and_Hyp_union ],
+                trace_goal "curry1",
+                apply MPPC_derives_x.and_Hyp_union,
+                trace_goal "curry2" ],
   curry_β := λ {X Y Z} u, by apply thin_cat.K,
   curry_η := λ {X Y Z} v, by apply thin_cat.K,
 }
