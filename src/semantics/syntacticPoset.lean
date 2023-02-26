@@ -1,5 +1,40 @@
 import deduction.deduction category_theory.category.preorder
 
+namespace synPoset_tactics
+
+  open tactic
+  open nat
+
+  meta def trace_goal (iden : string) : tactic unit :=
+    do  
+      tactic.trace ("-- GOAL @ " ++ iden ++ " --"),
+      tactic.trace_state
+      
+  meta def repeat_assume_pair : list name → tactic (list (name × expr))
+  | [] := return []
+  | (nm::nms) :=
+    (do
+      temp_nm ← mk_fresh_name,
+      e ← intro temp_nm,
+      rest ← repeat_assume_pair nms,
+      return $ (nm,e)::rest)
+    -- <|> (return [])
+
+  meta def repeat_assume : list name → tactic unit :=
+    list.foldr (λ nm rest, intro nm >> rest) skip 
+
+  meta def repeat_assume_then_induct (T : tactic unit) (N : list name) : tactic unit :=
+    do
+      assumptionList ← repeat_assume_pair N,
+      T,
+      let cmb := λ nm e (res : tactic unit), (induction e [nm]) >> res,
+      list.foldr (function.uncurry cmb) skip assumptionList
+
+  meta def repeat_assume_induct : list name →  tactic unit :=
+    repeat_assume_then_induct skip
+
+end synPoset_tactics
+
 namespace synPoset
 
   variable {Form : Type}
@@ -70,21 +105,19 @@ namespace synPoset
   def Form_eq_order [Der : has_derives Form] : @Form_eq Form Der → @Form_eq Form Der → Prop 
     := quot.lift₂ synPoset.syn_preorder.le syn_preorder_liftable1 syn_preorder_liftable2
 
-
+  open synPoset_tactics
 
   instance syn_poset [Der : has_derives Form] : partial_order Form_eq :=
   { le := @Form_eq_order Form Der,
     le_refl := 
       begin
-        assume a,
-        induction a with φ, 
+        repeat_assume_induct [`φ],
         dsimp[(≤),setoid.r,Form_eq_order],
         apply Der.derive_refl,refl,
       end,
     le_trans := 
       begin 
-        assume a b c h j,
-        induction a with φ, induction b with ψ, induction c with θ,
+        repeat_assume_then_induct `[ assume h j ] [`φ,`ψ,`θ],
         dsimp[(≤),setoid.r,Form_eq_order],
         dsimp[(≤)] at h, dsimp[(≤)] at j, 
         apply Der.derive_trans,
@@ -93,8 +126,7 @@ namespace synPoset
       end,
     le_antisymm :=  
       begin
-        assume a b h j,
-        induction a with φ, induction b with ψ,
+        repeat_assume_then_induct `[ assume h j ] [`φ,`ψ],
         apply quotient.sound,
         dsimp[(≈),setoid.r],dsimp[(≤)] at h, dsimp[(≤)] at j,
         constructor, exact h, exact j, refl, refl,
