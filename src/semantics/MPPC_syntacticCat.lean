@@ -1,4 +1,4 @@
-import semantics.syntacticCat semantics.MPPC_poset categoryTheory.CCC category_theory.category.preorder category_theory.monad.basic
+import generalTactics semantics.syntacticCat semantics.MPPC_poset categoryTheory.CCC category_theory.category.preorder category_theory.monad.basic
 -- open category_theory
 
 open MPPC_defn
@@ -25,8 +25,6 @@ where XXX is a rule of MPPC_Der
 meta def lift_derive_ℂ_MPPC (numobjs nummorphs : nat) : tactic unit → tactic unit :=
   @synCat_tactics.lift_derive_syn_cat Form Der numobjs nummorphs
 
-meta def trace_goal : string → tactic unit :=
-  synPoset_tactics.trace_goal
 
 end ℂ_MPPC_tactics
 
