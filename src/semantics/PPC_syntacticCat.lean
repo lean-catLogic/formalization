@@ -5,11 +5,6 @@ open PPC_defn
 open PPC_defn.PPC_derives
 open PPC_synPoset
 open synCat
-
-meta def trace_goal (iden : string) : tactic unit :=
-  synPoset_tactics.trace_goal iden
-
-
 open specialCats
 
 instance ℂ_PPC : thin_cat PPC_eq := syn_cat
