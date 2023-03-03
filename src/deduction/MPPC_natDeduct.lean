@@ -11,8 +11,7 @@ namespace MPPC_defn
     | and : MPPC_Form → MPPC_Form → MPPC_Form
     | impl : MPPC_Form → MPPC_Form → MPPC_Form
     | diamond : MPPC_Form → MPPC_Form
-
-    prefix `p`:80     := MPPC_Form.var  
+ 
     notation (name:= MPPC_Form.diamond) `◇`:max φ := MPPC_Form.diamond φ
 
 
@@ -104,7 +103,7 @@ namespace MPPC_has_derives
         end,
     }
 
-    instance MPPC_top : deduction_cart.has_top MPPC_Form :=
+    instance MPPC_top : deduction_cart.has_ltop MPPC_Form :=
     {
       top := MPPC_Form.top,
       truth := @truth,

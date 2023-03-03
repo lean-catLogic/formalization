@@ -13,7 +13,7 @@ namespace deduction_basic
 
   class has_derives (Form : Type) extends has_Hyp Form := 
     (derives : Hyp → Form → Prop)
-    (derive_Trans : ∀ (Φ : Hyp) (ψ θ : Form), derives Φ ψ → derives {ψ} θ → derives Φ θ)
+    (derive_Trans : ∀ {Φ : Hyp} (ψ) {θ : Form}, derives Φ ψ → derives {ψ} θ → derives Φ θ)
 
   def der {Form : Type} [Der : has_derives Form] : Form → Form → Prop :=
     λ φ ψ, has_derives.derives {φ} ψ
@@ -21,7 +21,7 @@ namespace deduction_basic
   infix `⊢`:60 := der
 
   lemma derive_trans {Form : Type} [Der : has_derives Form] : 
-    ∀ {φ ψ θ : Form}, (φ ⊢ ψ) → (ψ ⊢ θ) → (φ ⊢ θ) :=
+    ∀ (φ ψ θ : Form), (φ ⊢ ψ) → (ψ ⊢ θ) → (φ ⊢ θ) :=
   begin
     assume φ,
     apply Der.derive_Trans,
@@ -34,7 +34,7 @@ namespace deduction_basic
     (weak1 : ∀ {Φ} {φ} (ψ), derives Φ φ → derives (insert ψ Φ) φ)
 
   lemma derive_refl {Form : Type} [Der : has_struct_derives Form] :
-    ∀ {φ : Form}, φ ⊢ φ :=
+    ∀ φ : Form, φ ⊢ φ :=
   begin
     assume φ,
     apply Der.hyp,

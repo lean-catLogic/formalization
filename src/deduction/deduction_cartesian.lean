@@ -1,18 +1,18 @@
-import deduction.deduction
+import deduction.deduction order.bounded_order
 
 namespace deduction_cart
 
 open deduction_basic
 
 /- Truth -/
-class has_top (Form : Type) extends has_struct_derives Form := 
+class has_ltop (Form : Type) extends has_struct_derives Form := 
   (top : Form)
   (truth : ∀ {Φ : Hyp}, derives Φ top)
 
-notation (name:=has_top.top) `⊤`:80   := has_top.top
+instance {Form : Type} [Der : has_ltop Form] : has_top Form := ⟨ Der.top ⟩
 
 /- Logical And -/
-class has_and (Form : Type) extends has_top Form :=
+class has_and (Form : Type) extends has_ltop Form :=
   (and : Form → Form → Form)
   (and_intro {Φ} {φ ψ : Form}    
         : derives Φ φ → derives Φ ψ → derives Φ (and φ ψ))
@@ -51,6 +51,15 @@ namespace cart_x
     apply Der.hyp,
     apply Der.inInsert,
   end
+  lemma and_internal {Form : Type} [Der : has_and Form] {φ ψ θ: Form} : 
+    (φ & ψ ⊢ θ) → Der.derives (Der.insertHyp.insert ψ {φ}) θ :=
+  begin
+    assume h,
+    apply Der.derive_Trans (φ & ψ),
+    exact and_intro1,
+    exact h,
+  end
+
 
   lemma and_eliml1 {Form : Type} [Der : has_and Form] {φ ψ : Form} : 
     φ & ψ ⊢ φ :=
@@ -81,6 +90,16 @@ namespace cart_x
     apply Der.impl_intro,
     apply Der.derive_Trans,
     apply and_intro1,
+    exact h,
+  end
+
+  lemma insert_trans {Form : Type} [Der : has_impl Form] {Φ} {φ ψ : Form} :
+    (φ ⊢ ψ) → Der.derives (Der.insertHyp.insert φ Φ) ψ :=
+  begin
+    assume h,
+    apply Der.derive_Trans φ,
+    apply Der.hyp,
+    apply Der.inInsert,
     exact h,
   end
 end cart_x
