@@ -1,4 +1,4 @@
-import deduction.deduction category_theory.category.preorder
+import generalTactics deduction.deduction category_theory.category.preorder
 
 namespace synPoset
 
@@ -70,21 +70,17 @@ namespace synPoset
   def Form_eq_order [Der : has_derives Form] : @Form_eq Form Der → @Form_eq Form Der → Prop 
     := quot.lift₂ synPoset.syn_preorder.le syn_preorder_liftable1 syn_preorder_liftable2
 
-
-
   instance syn_poset [Der : has_derives Form] : partial_order Form_eq :=
   { le := @Form_eq_order Form Der,
     le_refl := 
       begin
-        assume a,
-        induction a with φ, 
+        repeat_assume_induct [`φ],
         dsimp[(≤),setoid.r,Form_eq_order],
         apply Der.derive_refl,refl,
       end,
     le_trans := 
       begin 
-        assume a b c h j,
-        induction a with φ, induction b with ψ, induction c with θ,
+        repeat_assume_then_induct `[ assume h j ] [`φ,`ψ,`θ],
         dsimp[(≤),setoid.r,Form_eq_order],
         dsimp[(≤)] at h, dsimp[(≤)] at j, 
         apply Der.derive_trans,
@@ -93,8 +89,7 @@ namespace synPoset
       end,
     le_antisymm :=  
       begin
-        assume a b h j,
-        induction a with φ, induction b with ψ,
+        repeat_assume_then_induct `[ assume h j ] [`φ,`ψ],
         apply quotient.sound,
         dsimp[(≈),setoid.r],dsimp[(≤)] at h, dsimp[(≤)] at j,
         constructor, exact h, exact j, refl, refl,
