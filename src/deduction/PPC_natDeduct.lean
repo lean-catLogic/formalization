@@ -24,8 +24,8 @@ namespace PPC_defn
 
 
     inductive PPC_derives : PPC_Hyp → PPC_Form → Prop 
-    | hyp {Φ : PPC_Hyp} {φ : PPC_Form} 
-        : (φ ∈ Φ) → PPC_derives Φ φ
+    | hyp {Φ : PPC_Hyp} (φ : PPC_Form) (φ ∈ Φ)    
+        : PPC_derives Φ φ
     | truth {Φ}                               
         : PPC_derives Φ ⊤ 
     | and_intro {Φ} {φ ψ : PPC_Form}    
@@ -140,13 +140,13 @@ namespace PPC_derives_x
         exact hΦφ,
     end 
 
-    lemma modus_ponens : ∀ φ ψ : PPC_Form, PPC_derives ({φ⊃ψ, φ}) ψ :=
+    lemma modus_ponens : ∀ φ ψ : PPC_Form, PPC_derives ({φ⊃ψ}∪{φ}) ψ :=
     begin 
         assume φ ψ,
         apply impl_elim,
         apply weak,
         apply PPC_has_derives.PPC_Der.derive_refl,
-        rw Hyp_twoElt_comm,
+        rewrite set.union_comm,
         apply weak,
         apply PPC_has_derives.PPC_Der.derive_refl,
     end 
@@ -159,10 +159,10 @@ namespace PPC_derives_x
         apply impl_intro,
         apply impl_intro,
         apply impl_elim ψ,
-        apply hyp, find_it,
+        apply hyp (ψ ⊃ θ), find_it,
         apply impl_elim φ,
-        apply hyp, find_it,
-        apply hyp, find_it,
+        apply hyp (φ⊃ψ), find_it,
+        apply hyp φ, find_it,
     end 
 
     lemma union_Hyp_and : ∀ φ ψ θ : PPC_Form, PPC_derives ({φ,ψ}) θ → ((φ&ψ) ⊢ θ) :=
