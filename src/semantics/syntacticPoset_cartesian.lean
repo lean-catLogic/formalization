@@ -8,7 +8,7 @@ open deduction_cart
 
 variable {Form : Type}
 
-  -- ⊓ : Form_eq → Form_eq → Form_eq
+  -- ⊤ : Form_eq
   instance [Der : has_ltop Form] : has_top (Form _eq) := ⟨ ⦃Der.top⦄ ⟩ 
 
   lemma and_liftable1 [Der : has_and Form] : 
