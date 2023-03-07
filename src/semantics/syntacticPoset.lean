@@ -8,7 +8,7 @@ namespace synPoset
   instance syn_preorder [Der : has_struct_derives Form] : preorder Form :=
   { le := λ φ ψ, φ ⊢ ψ,
     le_refl := derive_refl,
-    le_trans := derive_trans,
+    le_trans := @derive_trans Form Der.to_has_derives,
   }
 
   def inter_der [Der : has_struct_derives Form] : Form → Form → Prop :=

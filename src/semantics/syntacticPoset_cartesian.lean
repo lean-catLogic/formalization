@@ -41,13 +41,13 @@ variable {Form : Type}
       split,
       -- Proof that φ&ψ ⊢ φ'&ψ
         apply Der.and_intro,
-        apply derive_trans,
+        apply derive_trans φ,
         apply cart_x.and_eliml1,
         exact φφ',
         apply cart_x.and_elimr1,
       -- Proof that φ'&ψ ⊢ φ&ψ
         apply Der.and_intro,
-        apply derive_trans,
+        apply derive_trans φ',
         apply cart_x.and_eliml1,
         exact φ'φ,
         apply cart_x.and_elimr1,
