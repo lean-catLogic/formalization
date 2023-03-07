@@ -21,7 +21,7 @@ namespace deduction_basic
   infix `⊢`:60 := der
 
   lemma derive_trans {Form : Type} [Der : has_derives Form] : 
-    ∀ (φ ψ θ : Form), (φ ⊢ ψ) → (ψ ⊢ θ) → (φ ⊢ θ) :=
+    ∀ {φ : Form} (ψ) {θ}, (φ ⊢ ψ) → (ψ ⊢ θ) → (φ ⊢ θ) :=
   begin
     assume φ,
     apply Der.derive_Trans,
