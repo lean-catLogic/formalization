@@ -11,8 +11,6 @@ namespace MPPC_defn
     | and : MPPC_Form → MPPC_Form → MPPC_Form
     | impl : MPPC_Form → MPPC_Form → MPPC_Form
     | diamond : MPPC_Form → MPPC_Form
- 
-    notation (name:= MPPC_Form.diamond) `◇`:max φ := MPPC_Form.diamond φ
 
 
     @[reducible] def MPPC_Hyp : Type := set (MPPC_Form)
@@ -21,6 +19,11 @@ namespace MPPC_defn
     instance : has_mem MPPC_Form MPPC_Hyp := infer_instance
     instance : has_insert MPPC_Form MPPC_Hyp := infer_instance
     instance : has_emptyc MPPC_Hyp := infer_instance
+
+    inductive isModal : MPPC_Hyp → Prop
+    | ModalEmpty : isModal ∅
+    | ModalInsert : ∀ (Φ : MPPC_Hyp) (φ : MPPC_Form), 
+        isModal Φ → isModal (insert (MPPC_Form.diamond φ) Φ)
 
     inductive MPPC_derives : MPPC_Hyp → MPPC_Form → Prop 
     | hyp {Φ : MPPC_Hyp} {φ : MPPC_Form}  
@@ -39,14 +42,18 @@ namespace MPPC_defn
         : MPPC_derives Φ (MPPC_Form.impl φ ψ) → MPPC_derives Φ φ → MPPC_derives Φ ψ
     | weak {Φ Ψ : MPPC_Hyp} {φ : MPPC_Form}
         : MPPC_derives Φ φ → MPPC_derives (Φ ∪ Ψ) φ
-    | dmap {φ ψ : MPPC_Form}
-        : MPPC_derives {φ} ψ → MPPC_derives {◇φ} ◇ψ
+    | dmap {φ ψ : MPPC_Form} 
+        : MPPC_derives {φ} ψ → MPPC_derives {φ.diamond} (ψ.diamond)
+
+    -- | Dmap {Φ : MPPC_Hyp} {φ : MPPC_Form}
+    --     : isModal Φ → MPPC_derives Φ φ → MPPC_derives Φ (MPPC_Form.diamond φ)
     | dpure {Φ : MPPC_Hyp} {φ : MPPC_Form}
-        : MPPC_derives Φ φ → MPPC_derives Φ (◇φ)
+        : MPPC_derives Φ φ → MPPC_derives Φ (MPPC_Form.diamond φ)
     | djoin {Φ : MPPC_Hyp} {φ : MPPC_Form}
-        : MPPC_derives Φ (◇◇φ) → MPPC_derives Φ (◇φ)
+        : MPPC_derives Φ (MPPC_Form.diamond(MPPC_Form.diamond φ)) → MPPC_derives Φ (MPPC_Form.diamond φ)
     open MPPC_derives
 
+notation (name:= MPPC.diamond) `◇`:81 φ := MPPC_Form.diamond φ 
 
 end MPPC_defn
 
@@ -57,6 +64,8 @@ namespace MPPC_has_derives
     open MPPC_defn.MPPC_derives
     open deduction_basic
     open deduction_cart
+    open MPPC_defn.MPPC_Form
+    -- open deduction_monadic
 
     instance MPPC_hasHyp : has_Hyp MPPC_Form :=
       { Hyp := MPPC_Hyp }
@@ -122,5 +131,28 @@ namespace MPPC_has_derives
       impl_intro := @impl_intro,
       impl_elim := @impl_elim,
     }
+    -- #check @dmap
+    -- def dmap : ∀ φ ψ : MPPC_Form, 
+      -- MPPC_has_derives.MPPC_Der.derives {φ} ψ → MPPC_has_derives.MPPC_Der.derives {φ.diamond} (ψ.diamond)
+      -- :=
+      -- begin
+      --   assume φ ψ h,
+      --   dsimp[MPPC_has_derives.MPPC_Der],
+      --   dsimp[MPPC_has_derives.MPPC_Der] at h,
+      --   apply @Dmap {diamond φ} ψ _ _,
+      --   apply isModal.ModalInsert,
+      --   apply isModal.ModalEmpty,
+      --   -- apply derive_trans φ,
+        
+      --   exact h,
+      -- end 
+
+    -- instance MPPC_diamond : deduction_monadic.has_diamond MPPC_Form :=
+    -- {
+    --   diamond := MPPC_Form.diamond,
+    --   dmap := Dmap, --sorry, --λ φ ψ (h:MPPC_derives {φ} ψ), @dmap φ ψ h,
+    --   dpure := @dpure,
+    --   djoin := @djoin,
+    -- }
 
 end MPPC_has_derives
