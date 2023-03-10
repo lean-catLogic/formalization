@@ -63,27 +63,17 @@ def diamond_monad : category_theory.monad MPPC_eq := {
   obj := diamond_eq,
   map := 
     begin
-    --  lift_derive_syn_cat 2 1 `[ apply @dmap φ_0 φ_1 ], -- TODO: Why doesn't this work?
-      assume X Y pre_f,
-      induction X with φ, induction Y with ψ,
-      apply syn_hom,
-      dsimp[(⊢),deduction_basic.has_derives.derives],
-      -- apply @dmap φ ψ, -- WHY???
+      HeavyLiftT? MPPC_Form MPPC_has_derives.MPPC_Der `[ skip ],
+      -- apply @dmap φ_0 φ_1, -- WHY???
       sorry,
       thin_cat.by_thin,
     end,
   η'  := ⟨
-          begin
-             lift_derive_syn_cat 1 0 `[ apply dpure ],
-             apply @deduction_basic.derive_refl MPPC_Form MPPC_has_derives.MPPC_Der,
-          end,
+          by HeavyLiftT MPPC_Form MPPC_has_derives.MPPC_Der `[ apply dpure ],
           λ X Y f, by apply thin_cat.K,
          ⟩,
   μ' :=  ⟨ 
-          begin
-            lift_derive_syn_cat 1 0 `[ apply djoin ],
-             apply @deduction_basic.derive_refl MPPC_Form MPPC_has_derives.MPPC_Der,
-          end,
+          by HeavyLiftT MPPC_Form MPPC_has_derives.MPPC_Der `[ apply djoin ],
           λ X Y f, by apply thin_cat.K,
          ⟩,
 }

@@ -35,64 +35,35 @@ namespace synCat_tactics
   open lean.parser (ident)  
   open lean.parser (tk)
 
-  /-
-  Tactic for doing constructions in syn_cat which are actually just
-  the derivation rules lifted onto equivalence classes
-  First two arguments are the number of objects and morphisms to assume
-  Tactic input should be of the form `[ apply XXX ]
-  where XXX is a derivation rule of Der
- -/
-
-  meta def lift_derive_syn_cat_init (numobjs : nat) (nummor : nat)
-  : tactic unit :=
-  do
-    /- Assume objects and morphisms, 
-      use induction to get that every object is of the form ⦃φ⦄ for some φ:Form
-    -/
-    repeat_assume_induct (gen_nameList `φ_ numobjs),
-    repeat_assume (gen_nameList `f_ nummor),
-    -- Turn the synCat hom goal to a derivation goal
-    applyc `synCat.syn_hom,
-    trace_goal "BEGIN",
-    trace "-- BEGIN USE TACTIC --"
-  
-  meta def cleanup
-    (conclude : parse (optional $ tk "-"))
-    : tactic unit :=
-  (do
-    iterate (
-      (applyc `deduction_basic.derive_refl)
-      <|> (applyc `synCat.derives_of_hom >> assumption)
-    ),
-    when conclude.is_none thin_cat.by_thin)
-
-  meta def lift_derive_syn_cat (numobjs : nat) (nummor : nat) 
-  (T : tactic unit) : tactic unit :=
-  do
-    lift_derive_syn_cat_init numobjs nummor,
-    -- Use tactic
-    T,
-    trace "-- END USE TACTIC --",
-    trace_goal "END",
-    -- Clean up
-    cleanup none
-
   /- Tactic which accepts a type as an expr
      and counts the number of assumed objects and
      morphisms
   -/
   open nat
+  meta def incrLeft : nat × nat → tactic(nat × nat)
+    | (o,m) := return (succ o, m)
+  meta def incrRight : nat × nat → tactic(nat × nat)
+    | (o,m) := return (o, succ m)
+
   meta def mkCount : expr →  tactic (nat × nat)
-  | `( Π {_ : _ _eq}, %%newGoal) := 
-    do 
-      (o,m) ← mkCount newGoal,
-      return (succ o,m)
-  | `( Π {_ : _ ⟶ _}, %%newGoal) := 
-    do 
-      (o,m) ← mkCount newGoal,
-      return (o,succ m)
+  | `( Π {_ : _ _eq}, %%newGoal) := mkCount newGoal >>= incrLeft
+  | `( Π {_ : _ ⟶ _}, %%newGoal) := mkCount newGoal >>= incrRight
+  | _ := return (0,0)
+  
+  /- Like mkCount, but treats any non-morphism as an object -/
+  meta def sloppyMkCount : expr →  tactic (nat × nat)
+  | `( Π {_ : _ ⟶ _}, %%newGoal) := sloppyMkCount newGoal >>= incrRight
+  | `( Π _, %%newGoal) := sloppyMkCount newGoal >>= incrLeft
   | _ := return (0,0)
 
+  /-
+  Tactic for doing constructions in syn_cat which are actually just
+  the derivation rules lifted onto equivalence classes
+  Invoking as LiftT? LiftT?! or LiftT?!! will only partially perform
+  the tactic (useful for debugging)
+  Tactic input should be of the form `[ apply XXX ]
+  where XXX is a derivation rule of Der, though it could be more elaborate
+ -/
   meta def LiftT 
     (debugMode : parse (optional $ tk "?")) 
     (debugPerformTac : parse (optional $ tk "!"))
@@ -100,25 +71,79 @@ namespace synCat_tactics
     (T : tactic unit) 
     : tactic unit :=
   do
-  
+    let proceedLevel := 
+      match (debugMode,debugPerformTac,debugCleanup) with 
+      | (none,_,_) := 4 -- LiftT    invoked: do everything
+      | (_,none,_) := 1 -- LiftT?   invoked: just do the assume's and syn_hom
+      | (_,_,none) := 2 -- LiftT?!  invoked: also apply the tactic
+      | _ := 3          -- LiftT?!! invoked: also do the first stage of cleanup
+      end,
     -- Count & print how many objects and morphisms to assume
     (numobjs,nummor) ← target >>= mkCount,
     trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
-    match (debugMode, debugPerformTac) with 
+    /- Assume objects and morphisms, 
+      use induction to get that every object is of the form ⦃φ⦄ for some φ:Form -/
+    repeat_assume_induct (gen_nameList `φ_ numobjs),
+    repeat_assume (gen_nameList `f_ nummor),
+    -- Turn the synCat hom goal to a derivation goal
+    applyc `synCat.syn_hom,
+  when (proceedLevel > 1) $ do
+    -- Apply the input tactic
+    T,
+  when (proceedLevel > 2) $ do
+    -- Eliminate other goals (first stage of cleanup)
+    iterate (
+      (applyc `deduction_basic.derive_refl)
+      <|> (applyc `synCat.derives_of_hom >> assumption)
+    ),
+  when (proceedLevel > 3) $ do
+    -- Prove the coherences
+    thin_cat.by_thin
 
-    -- No debugging args: perform the full tactic
-    | (none,_) := lift_derive_syn_cat numobjs nummor T
+  /- Same as LiftT, but takes in Form and Der as arguments, in case 
+     Lean can't deduce them. Uses sloppyMkCount, in case the object
+     type isn't exactly (Something _eq) -/
+  meta def HeavyLiftT
+    (debugMode : parse (optional $ tk "?")) 
+    (debugPerformTac : parse (optional $ tk "!"))
+    (debugCleanup : parse (optional $ tk "!"))
+    (FORM : parse ident)
+    (DER : parse ident)
+    (T : tactic unit) 
+    : tactic unit :=
+  do
+    Form ← resolve_name FORM,
+    Der ← resolve_name DER,
+    let proceedLevel := 
+      match (debugMode,debugPerformTac,debugCleanup) with 
+      | (none,_,_) := 4 -- LiftT    invoked: do everything
+      | (_,none,_) := 1 -- LiftT?   invoked: just do the assume's and syn_hom
+      | (_,_,none) := 2 -- LiftT?!  invoked: also apply the tactic
+      | _ := 3          -- LiftT?!! invoked: also do the first stage of cleanup
+      end,
+    -- Count & print how many objects and morphisms to assume
+    (numobjs,nummor) ← target >>= sloppyMkCount,
+    trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
+    /- Assume objects and morphisms, 
+      use induction to get that every object is of the form ⦃φ⦄ for some φ:Form -/
+    repeat_assume_induct (gen_nameList `φ_ numobjs),
+    repeat_assume (gen_nameList `f_ nummor),
+    -- Turn the synCat hom goal to a derivation goal
+    applyc `synCat.syn_hom,
+  when (proceedLevel > 1) $ do
+    -- Apply the input tactic
+    T,
+  when (proceedLevel > 2) $ do
+    -- Eliminate other goals (first stage of cleanup)
+    iterate (
+      (i_to_expr ``(@deduction_basic.derive_refl %%Form %%Der) >>= apply >> return ())
+      <|> (i_to_expr ``(@synCat.derives_of_hom %%Form %%Der) >>= apply >> assumption)
+      <|> (applyc `synCat.derives_of_hom >> assumption)
+    ),
+  when (proceedLevel > 3) $ do
+    -- Prove the coherences
+    thin_cat.by_thin
 
-    -- LiftT? invoked: just do the assume's and syn_hom
-    | (some _, none) := lift_derive_syn_cat_init numobjs nummor
-
-    -- LiftT?! invoked: apply the tactic
-    | (some _, some _) := lift_derive_syn_cat_init numobjs nummor 
-                          >> T
-                          -- LiftT?!! invoked: also do the first stage of cleanup
-                          >> when debugCleanup.is_some (cleanup $ some ())
-    end
-    
 end synCat_tactics
-run_cmd add_interactive [`synCat_tactics.lift_derive_syn_cat,`synCat_tactics.LiftT,`synCat_tactics.cleanup]
+run_cmd add_interactive [`synCat_tactics.LiftT,`synCat_tactics.HeavyLiftT]
 
