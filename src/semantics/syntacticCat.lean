@@ -43,7 +43,7 @@ namespace synCat_tactics
   where XXX is a derivation rule of Der
  -/
 
-  meta def lift_derive_syn_cat (numobjs : nat) (nummor : nat) (T : tactic unit) 
+  meta def lift_derive_syn_cat_init (numobjs : nat) (nummor : nat)
   : tactic unit :=
   do
     /- Assume objects and morphisms, 
@@ -53,21 +53,72 @@ namespace synCat_tactics
     repeat_assume (gen_nameList `f_ nummor),
     -- Turn the synCat hom goal to a derivation goal
     applyc `synCat.syn_hom,
-    -- Use tactic
     trace_goal "BEGIN",
-    trace "-- BEGIN USE TACTIC --",
-    T,
-    trace "-- END USE TACTIC --",
-    trace_goal "END",
-    -- Clean up
+    trace "-- BEGIN USE TACTIC --"
+  
+  meta def cleanup
+    (conclude : parse (optional $ tk "-"))
+    : tactic unit :=
+  (do
     iterate (
       (applyc `deduction_basic.derive_refl)
       <|> (applyc `synCat.derives_of_hom >> assumption)
     ),
-    thin_cat.by_thin,
-    return ()
-    
+    when conclude.is_none thin_cat.by_thin)
 
+  meta def lift_derive_syn_cat (numobjs : nat) (nummor : nat) 
+  (T : tactic unit) : tactic unit :=
+  do
+    lift_derive_syn_cat_init numobjs nummor,
+    -- Use tactic
+    T,
+    trace "-- END USE TACTIC --",
+    trace_goal "END",
+    -- Clean up
+    cleanup none
+
+  /- Tactic which accepts a type as an expr
+     and counts the number of assumed objects and
+     morphisms
+  -/
+  open nat
+  meta def mkCount : expr →  tactic (nat × nat)
+  | `( Π {_ : _ _eq}, %%newGoal) := 
+    do 
+      (o,m) ← mkCount newGoal,
+      return (succ o,m)
+  | `( Π {_ : _ ⟶ _}, %%newGoal) := 
+    do 
+      (o,m) ← mkCount newGoal,
+      return (o,succ m)
+  | _ := return (0,0)
+
+  meta def LiftT 
+    (debugMode : parse (optional $ tk "?")) 
+    (debugPerformTac : parse (optional $ tk "!"))
+    (debugCleanup : parse (optional $ tk "!"))
+    (T : tactic unit) 
+    : tactic unit :=
+  do
+  
+    -- Count & print how many objects and morphisms to assume
+    (numobjs,nummor) ← target >>= mkCount,
+    trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
+    match (debugMode, debugPerformTac) with 
+
+    -- No debugging args: perform the full tactic
+    | (none,_) := lift_derive_syn_cat numobjs nummor T
+
+    -- LiftT? invoked: just do the assume's and syn_hom
+    | (some _, none) := lift_derive_syn_cat_init numobjs nummor
+
+    -- LiftT?! invoked: apply the tactic
+    | (some _, some _) := lift_derive_syn_cat_init numobjs nummor 
+                          >> T
+                          -- LiftT?!! invoked: also do the first stage of cleanup
+                          >> when debugCleanup.is_some (cleanup $ some ())
+    end
+    
 end synCat_tactics
-run_cmd add_interactive [`synCat_tactics.lift_derive_syn_cat]
+run_cmd add_interactive [`synCat_tactics.lift_derive_syn_cat,`synCat_tactics.LiftT,`synCat_tactics.cleanup]
 

@@ -10,12 +10,12 @@ namespace synCat_cartesian
 instance syn_FP_cat {Form : Type} [And : has_and Form] : FP_cat (Form _eq) :=
 {
   unit := syn_obj And.top,
-  term := by lift_derive_syn_cat 1 0 `[ apply And.truth ],
+  term := by LiftT `[ apply And.truth ],
   unit_η := λ X f, by apply thin_cat.K,
   prod := and_eq,
-  pr1 := by lift_derive_syn_cat 2 0 `[ apply And.and_eliml ],
-  pr2 := by lift_derive_syn_cat 2 0 `[ apply And.and_elimr ],
-  pair := by lift_derive_syn_cat 3 2 `[ apply And.and_intro ],
+  pr1 := by LiftT `[ apply And.and_eliml ],
+  pr2 := by LiftT `[ apply And.and_elimr ],
+  pair := by LiftT `[ apply And.and_intro ],
   prod_β1 := λ X Y Z f g, by apply thin_cat.K,
   prod_β2 := λ X Y Z f g, by apply thin_cat.K,
   prod_η :=  λ X Y, by apply thin_cat.K
@@ -23,8 +23,8 @@ instance syn_FP_cat {Form : Type} [And : has_and Form] : FP_cat (Form _eq) :=
 instance syn_CC_cat {Form : Type} [Impl : has_impl Form] : CC_cat (Form _eq) :=
 {
   exp := impl_eq,
-  eval := by lift_derive_syn_cat 2 0 `[ apply cart_x.modus_ponens ],
-  curry := by lift_derive_syn_cat 3 1 `[ apply cart_x.impl_ε ],
+  eval := by LiftT `[ apply cart_x.modus_ponens ],
+  curry := by LiftT `[ apply cart_x.impl_ε ],
   curry_β := λ {X Y Z} u, by apply thin_cat.K,
   curry_η := λ {X Y Z} v, by apply thin_cat.K,
 }
