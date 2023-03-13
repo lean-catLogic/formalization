@@ -2,6 +2,10 @@ import meta.expr
 
 open tactic
 open nat
+  open interactive (parse)
+  open lean.parser (ident)  
+  open lean.parser (tk)
+  open tactic.interactive («have»)
 
 -- Tactic for print-debugging
 meta def trace_goal (iden : string) : tactic unit :=
@@ -24,6 +28,7 @@ meta def repeat_assume_pair : list name → tactic (list (name × expr))
     rest ← repeat_assume_pair nms,
     return $ (nm,e)::rest)
   -- <|> (return [])
+
 
 /- Takes a list of names, introduces new variables by those names,
    and then returns unit. 
@@ -68,6 +73,22 @@ meta def repeat_assume_induct : list name →  tactic unit :=
   repeat_assume_then_induct skip
 
 /-
+  Assumes premises with each name from N, and then "applies" the
+  operation named F to each premise.
+-/
+meta def repeat_assume_replace (F : parse ident) (N : list name) : tactic unit :=
+do
+  f ← resolve_name F,
+  assumptionList ← repeat_assume_pair N,
+  let cmb := λ (nm : name) (e : expr) (res:tactic unit),
+    (do
+      «have» nm none ``(%%f %%e),
+      clear e,
+      res),
+  list.foldr (function.uncurry cmb) skip assumptionList
+
+
+/-
   gen_nameList takes a "base name" nm and will generate n
   unique names: nm0, nm1, ...
   More user-readable way of generating fresh names
@@ -76,3 +97,6 @@ def varFormat (baseName : name) (i : nat) : name :=
   name.append_suffix baseName (nat.has_repr.repr i)
 def gen_nameList (baseName : name) (n : nat) : list name := 
   list.map (varFormat baseName) (list.range n)
+
+
+run_cmd add_interactive [`repeat_assume_replace]

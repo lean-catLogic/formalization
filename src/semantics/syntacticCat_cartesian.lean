@@ -24,7 +24,7 @@ instance syn_CC_cat {Form : Type} [Impl : has_impl Form] : CC_cat (Form _eq) :=
 {
   exp := impl_eq,
   eval := by LiftT `[ apply cart_x.modus_ponens ],
-  curry := by LiftT `[ apply cart_x.impl_ε ],
+  curry := by LiftT `[ apply cart_x.impl_ε],
   curry_β := λ {X Y Z} u, by apply thin_cat.K,
   curry_η := λ {X Y Z} v, by apply thin_cat.K,
 }

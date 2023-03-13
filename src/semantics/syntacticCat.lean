@@ -21,7 +21,14 @@ namespace synCat
     assume φ ψ h,
     apply hom_of_le,
     exact h,
-  end 
+  end
+  def syn_hom_inv [Der : has_struct_derives Form] : 
+      ∀ {φ ψ : Form}, (syn_obj φ ⟶ syn_obj ψ) → (φ ⊢ ψ) :=
+  begin
+    assume φ ψ H,
+    apply @le_of_hom Form synPoset.syn_preorder,
+    exact H,
+  end
 
   def derives_of_hom [Der : has_struct_derives Form] {φ ψ : Form} (f : syn_obj φ ⟶ syn_obj ψ) : 
     Der.derives {φ} ψ :=
@@ -34,6 +41,18 @@ namespace synCat_tactics
   open interactive (parse)
   open lean.parser (ident)  
   open lean.parser (tk)
+  open tactic.interactive («have»)
+
+
+  /- Turns a hypothesis for the form ⦃φ⦄ ⟶ ⦃ψ⦄ into a
+     derivation  φ ⊢ ψ -/
+  meta def Lower (n : parse ident) : tactic unit 
+  := do
+    e ← (resolve_name n) >>= tactic.i_to_expr,
+    «have» n none ``(synCat.syn_hom_inv %%e),
+    tactic.clear e
+
+
 
   /- Tactic which accepts a type as an expr
      and counts the number of assumed objects and
@@ -82,9 +101,10 @@ namespace synCat_tactics
     (numobjs,nummor) ← target >>= mkCount,
     trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
     /- Assume objects and morphisms, 
-      use induction to get that every object is of the form ⦃φ⦄ for some φ:Form -/
+      - use induction to get that every object is of the form ⦃φ⦄ for some φ:Form 
+      - use syn_hom_inv to turn every assumed morphism into a derivation -/
     repeat_assume_induct (gen_nameList `φ_ numobjs),
-    repeat_assume (gen_nameList `f_ nummor),
+    repeat_assume_replace `synCat.syn_hom_inv (gen_nameList `f_ nummor),
     -- Turn the synCat hom goal to a derivation goal
     applyc `synCat.syn_hom,
   when (proceedLevel > 1) $ do
@@ -94,7 +114,7 @@ namespace synCat_tactics
     -- Eliminate other goals (first stage of cleanup)
     iterate (
       (applyc `deduction_basic.derive_refl)
-      <|> (applyc `synCat.derives_of_hom >> assumption)
+      <|> assumption
     ),
   when (proceedLevel > 3) $ do
     -- Prove the coherences
@@ -125,9 +145,10 @@ namespace synCat_tactics
     (numobjs,nummor) ← target >>= sloppyMkCount,
     trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
     /- Assume objects and morphisms, 
-      use induction to get that every object is of the form ⦃φ⦄ for some φ:Form -/
+      - use induction to get that every object is of the form ⦃φ⦄ for some φ:Form 
+      - use syn_hom_inv to turn every assumed morphism into a derivation -/
     repeat_assume_induct (gen_nameList `φ_ numobjs),
-    repeat_assume (gen_nameList `f_ nummor),
+    repeat_assume_replace `synCat.syn_hom_inv (gen_nameList `f_ nummor),
     -- Turn the synCat hom goal to a derivation goal
     applyc `synCat.syn_hom,
   when (proceedLevel > 1) $ do
@@ -137,13 +158,13 @@ namespace synCat_tactics
     -- Eliminate other goals (first stage of cleanup)
     iterate (
       (i_to_expr ``(@deduction_basic.derive_refl %%Form %%Der) >>= apply >> return ())
-      <|> (i_to_expr ``(@synCat.derives_of_hom %%Form %%Der) >>= apply >> assumption)
-      <|> (applyc `synCat.derives_of_hom >> assumption)
+      <|> assumption
     ),
   when (proceedLevel > 3) $ do
     -- Prove the coherences
     thin_cat.by_thin
 
 end synCat_tactics
-run_cmd add_interactive [`synCat_tactics.LiftT,`synCat_tactics.HeavyLiftT]
+
+run_cmd add_interactive [`synCat_tactics.LiftT,`synCat_tactics.HeavyLiftT,`synCat_tactics.Lower]
 
