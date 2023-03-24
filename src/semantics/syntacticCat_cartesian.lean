@@ -3,7 +3,6 @@ import semantics.syntacticCat semantics.syntacticPoset_cartesian categoryTheory.
 open deduction_cart
 open deduction_monadic
 open synPoset_cartesian
-open synPoset_monadic
 open synCat
 open specialCats
 
@@ -33,24 +32,6 @@ instance syn_CC_cat {Form : Type} [Impl : has_impl Form] : CC_cat (Form _eq) :=
 
 end synCat_cartesian
 
-namespace synCat_monadic
-
--- instance syn_CC_cat_monad {Form : Type} [Diam : has_diamond Form] : 
-
-def diamond_monad {Form : Type} [Diam : has_diamond Form] : category_theory.monad (Form _eq) := 
-{
-  obj := diamond_eq,
-  map := by LiftT `[ apply Diam.dmap ],
-  η'  := ⟨
-          by LiftT `[ apply Diam.dpure ], 
-          λ X Y f, by apply thin_cat.K,
-         ⟩,
-  μ' :=  ⟨ 
-          by LiftT `[ apply Diam.djoin ],
-          λ X Y f, by apply thin_cat.K,
-         ⟩,
-}
-end synCat_monadic
 
 /- Instances -/
 namespace PPC_synCat
@@ -72,13 +53,10 @@ namespace MPPC_synCat
   open MPPC_defn
   open synPoset_cartesian
   open MPPC_synPoset
-  open MPPC_defn.MPPC_derives
-  open MPPC_has_derives
 
   def ℂ_MPPC : thin_cat MPPC_eq := syn_cat 
   instance : FP_cat MPPC_eq := synCat_cartesian.syn_FP_cat
   instance : CC_cat MPPC_eq := synCat_cartesian.syn_CC_cat
-  def ℂ_MPPC_diamond : category_theory.monad MPPC_eq := synCat_monadic.diamond_monad
 
 end MPPC_synCat
 

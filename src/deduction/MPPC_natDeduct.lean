@@ -44,12 +44,6 @@ namespace MPPC_defn
         : MPPC_derives Φ φ → MPPC_derives (Φ ∪ Ψ) φ
     | dmap {Φ : MPPC_Hyp}{φ ψ : MPPC_Form} 
         : MPPC_derives (insert φ Φ) ψ → MPPC_derives (insert (MPPC_Form.diamond φ) Φ) (MPPC_Form.diamond ψ)
-
-    -- | dmap {φ ψ : MPPC_Form} 
-    --     : MPPC_derives {φ} ψ → MPPC_derives {φ.diamond} (ψ.diamond)
-
-    -- | Dmap {Φ : MPPC_Hyp} {φ : MPPC_Form}
-    --     : isModal Φ → MPPC_derives Φ φ → MPPC_derives Φ (MPPC_Form.diamond φ)
     | dpure {Φ : MPPC_Hyp} {φ : MPPC_Form}
         : MPPC_derives Φ φ → MPPC_derives Φ (MPPC_Form.diamond φ)
     | djoin {Φ : MPPC_Hyp} {φ : MPPC_Form}
@@ -69,7 +63,6 @@ namespace MPPC_has_derives
     open deduction_cart
     open deduction_monadic
     open MPPC_defn.MPPC_Form
-    -- open deduction_monadic
 
     instance MPPC_hasHyp : has_Hyp MPPC_Form :=
       { Hyp := MPPC_Hyp }
@@ -127,41 +120,19 @@ namespace MPPC_has_derives
       and_intro := @and_intro,
       and_eliml := @and_eliml,
       and_elimr := @and_elimr,
-
     }
-    instance MPPC_diamond : deduction_monadic.has_diamond MPPC_Form :=
+    instance MPPC_impl : deduction_cart.has_impl MPPC_Form :=
     {
       impl := MPPC_Form.impl,
       impl_intro := @impl_intro,
       impl_elim := @impl_elim,
+    }
+    instance MPPC_diamond : deduction_monadic.has_diamond MPPC_Form :=
+    {
       diamond := MPPC_Form.diamond,
       dmap := @dmap,
       dpure := @dpure,
       djoin := @djoin,
     }
-    -- #check @dmap
-    -- def dmap : ∀ φ ψ : MPPC_Form, 
-      -- MPPC_has_derives.MPPC_Der.derives {φ} ψ → MPPC_has_derives.MPPC_Der.derives {φ.diamond} (ψ.diamond)
-      -- :=
-      -- begin
-      --   assume φ ψ h,
-      --   dsimp[MPPC_has_derives.MPPC_Der],
-      --   dsimp[MPPC_has_derives.MPPC_Der] at h,
-      --   apply @Dmap {diamond φ} ψ _ _,
-      --   apply isModal.ModalInsert,
-      --   apply isModal.ModalEmpty,
-      --   -- apply derive_trans φ,
-        
-      --   exact h,
-      -- end 
-    -- #check MPPC_has_derives.MPPC_Der
-    -- def Der := MPPC_has_derives.MPPC_Der
-    -- instance MPPC_diamond : has_diamond MPPC_Form :=
-    -- {
-    --   diamond := MPPC_Form.diamond,
-    --   dmap :=  @dmap, --λ φ ψ (h:MPPC_derives {φ} ψ), @dmap φ ψ h,
-    --   dpure := @dpure,
-    --   djoin := @djoin,
-    -- }
 
 end MPPC_has_derives
