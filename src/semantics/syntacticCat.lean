@@ -104,10 +104,10 @@ namespace synCat_tactics
       | _ := 3          -- LiftT?!! invoked: also do the first stage of cleanup
       end,
     -- Count & print how many objects and morphisms to assume
+    (numobjs,nummor) ← doCount,
     /- Assume objects and morphisms, 
       - use induction to get that every object is of the form ⦃φ⦄ for some φ:Form 
       - use syn_hom_inv to turn every assumed morphism into a derivation -/
-    (numobjs,nummor) ← doCount,
     repeat_assume_induct (gen_nameList `φ_ numobjs),
     repeat_assume_replace `synCat.syn_hom_inv (gen_nameList `f_ nummor),
     -- Turn the synCat hom goal to a derivation goal
