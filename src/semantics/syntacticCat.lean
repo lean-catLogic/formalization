@@ -111,17 +111,21 @@ namespace synCat_tactics
       - use syn_hom_inv to turn every assumed morphism into a derivation -/
     repeat_assume_induct (gen_nameList `φ_ numobjs),
     repeat_assume_replace `synCat.syn_hom_inv (gen_nameList `f_ nummor),
+    trace_goal "Checkpoint 0",
     -- Turn the synCat hom goal to a derivation goal
     applyc `synCat.syn_hom,
+    trace_goal "Checkpoint 1",
   when (proceedLevel > 1) $ do
     -- Apply the input tactic
     T,
+    trace_goal "Checkpoint 2",
   when (proceedLevel > 2) $ do
     -- Eliminate other goals (first stage of cleanup)
     iterate (
       (applyc `deduction_basic.derive_refl)
       <|> assumption
     ),
+    trace_goal "Checkpoint 3",
   when (proceedLevel > 3) $ do
     -- Prove the coherences
     thin_cat.by_thin

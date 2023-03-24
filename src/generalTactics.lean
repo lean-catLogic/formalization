@@ -7,11 +7,19 @@ open nat
   open lean.parser (tk)
   open tactic.interactive («have»)
 
+def NEWLINE : char := char.of_nat 10
+def untilFirstEmptyLine (s : string) : string :=
+   string.intercalate "\n" $
+   list.take_while (λ k, k ≠ "") $ 
+   s.split_on NEWLINE
+
 -- Tactic for print-debugging
 meta def trace_goal (iden : string) : tactic unit :=
-  do  
-    tactic.trace ("-- GOAL @ " ++ iden ++ " --"),
-    tactic.trace_state
+  do 
+    trace ("\n-- GOAL @ " ++ iden ++ " --"),
+    st ← tactic.read,
+    let s := format.to_string (to_fmt st),
+    trace $ (untilFirstEmptyLine s) ++ "\n"
 
 /- Takes a list of names, introduces new variables by those names,
    and then returns a list of the names and corresponding expr's
