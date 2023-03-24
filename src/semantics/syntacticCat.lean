@@ -75,6 +75,13 @@ namespace synCat_tactics
   | `( Π _, %%newGoal) := sloppyMkCount newGoal >>= incrLeft
   | _ := return (0,0)
 
+  meta def doCount (sloppy : parse (optional $ tk "?")) : tactic (nat × nat) :=
+    do
+    let counter := match sloppy with none := mkCount | _ := sloppyMkCount end,
+    (numobjs,nummor) ← target >>= counter,
+    trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
+    return (numobjs,nummor)
+
   /-
   Tactic for doing constructions in syn_cat which are actually just
   the derivation rules lifted onto equivalence classes
@@ -98,24 +105,27 @@ namespace synCat_tactics
       | _ := 3          -- LiftT?!! invoked: also do the first stage of cleanup
       end,
     -- Count & print how many objects and morphisms to assume
-    (numobjs,nummor) ← target >>= mkCount,
-    trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
+    (numobjs,nummor) ← doCount none,
     /- Assume objects and morphisms, 
       - use induction to get that every object is of the form ⦃φ⦄ for some φ:Form 
       - use syn_hom_inv to turn every assumed morphism into a derivation -/
     repeat_assume_induct (gen_nameList `φ_ numobjs),
     repeat_assume_replace `synCat.syn_hom_inv (gen_nameList `f_ nummor),
+    trace_goal "Checkpoint 0",
     -- Turn the synCat hom goal to a derivation goal
     applyc `synCat.syn_hom,
+    trace_goal "Checkpoint 1",
   when (proceedLevel > 1) $ do
     -- Apply the input tactic
     T,
+    trace_goal "Checkpoint 2",
   when (proceedLevel > 2) $ do
     -- Eliminate other goals (first stage of cleanup)
     iterate (
       (applyc `deduction_basic.derive_refl)
       <|> assumption
     ),
+    trace_goal "Checkpoint 3",
   when (proceedLevel > 3) $ do
     -- Prove the coherences
     thin_cat.by_thin
@@ -142,8 +152,7 @@ namespace synCat_tactics
       | _ := 3          -- LiftT?!! invoked: also do the first stage of cleanup
       end,
     -- Count & print how many objects and morphisms to assume
-    (numobjs,nummor) ← target >>= sloppyMkCount,
-    trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
+    (numobjs,nummor) ← doCount (some()),
     /- Assume objects and morphisms, 
       - use induction to get that every object is of the form ⦃φ⦄ for some φ:Form 
       - use syn_hom_inv to turn every assumed morphism into a derivation -/
@@ -166,5 +175,5 @@ namespace synCat_tactics
 
 end synCat_tactics
 
-run_cmd add_interactive [`synCat_tactics.LiftT,`synCat_tactics.HeavyLiftT,`synCat_tactics.Lower]
+run_cmd add_interactive [`synCat_tactics.LiftT,`synCat_tactics.HeavyLiftT,`synCat_tactics.Lower,`synCat_tactics.doCount]
 
