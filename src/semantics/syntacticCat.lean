@@ -75,6 +75,12 @@ namespace synCat_tactics
   | `( Π _, %%newGoal) := sloppyMkCount newGoal >>= incrLeft
   | _ := return (0,0)
 
+  meta def doCount : tactic (nat × nat) :=
+    do
+    (numobjs,nummor) ← target >>= mkCount,
+    trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
+    return (numobjs,nummor)
+
   /-
   Tactic for doing constructions in syn_cat which are actually just
   the derivation rules lifted onto equivalence classes
@@ -98,11 +104,10 @@ namespace synCat_tactics
       | _ := 3          -- LiftT?!! invoked: also do the first stage of cleanup
       end,
     -- Count & print how many objects and morphisms to assume
-    (numobjs,nummor) ← target >>= mkCount,
-    trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
     /- Assume objects and morphisms, 
       - use induction to get that every object is of the form ⦃φ⦄ for some φ:Form 
       - use syn_hom_inv to turn every assumed morphism into a derivation -/
+    (numobjs,nummor) ← doCount,
     repeat_assume_induct (gen_nameList `φ_ numobjs),
     repeat_assume_replace `synCat.syn_hom_inv (gen_nameList `f_ nummor),
     -- Turn the synCat hom goal to a derivation goal
@@ -166,5 +171,5 @@ namespace synCat_tactics
 
 end synCat_tactics
 
-run_cmd add_interactive [`synCat_tactics.LiftT,`synCat_tactics.HeavyLiftT,`synCat_tactics.Lower]
+run_cmd add_interactive [`synCat_tactics.LiftT,`synCat_tactics.HeavyLiftT,`synCat_tactics.Lower,`synCat_tactics.doCount]
 
