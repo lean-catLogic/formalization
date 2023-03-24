@@ -1,7 +1,9 @@
 import semantics.syntacticCat semantics.syntacticPoset_cartesian categoryTheory.CCC category_theory.monad.basic
 
 open deduction_cart
+open deduction_monadic
 open synPoset_cartesian
+open synPoset_monadic
 open synCat
 open specialCats
 
@@ -31,6 +33,25 @@ instance syn_CC_cat {Form : Type} [Impl : has_impl Form] : CC_cat (Form _eq) :=
 
 end synCat_cartesian
 
+namespace synCat_monadic
+
+-- instance syn_CC_cat_monad {Form : Type} [Diam : has_diamond Form] : 
+
+def diamond_monad {Form : Type} [Diam : has_diamond Form] : category_theory.monad (Form _eq) := 
+{
+  obj := diamond_eq,
+  map := by LiftT `[ apply Diam.dmap ],
+  η'  := ⟨
+          by LiftT `[ apply Diam.dpure ], 
+          λ X Y f, by apply thin_cat.K,
+         ⟩,
+  μ' :=  ⟨ 
+          by LiftT `[ apply Diam.djoin ],
+          λ X Y f, by apply thin_cat.K,
+         ⟩,
+}
+end synCat_monadic
+
 /- Instances -/
 namespace PPC_synCat
 
@@ -57,26 +78,7 @@ namespace MPPC_synCat
   def ℂ_MPPC : thin_cat MPPC_eq := syn_cat 
   instance : FP_cat MPPC_eq := synCat_cartesian.syn_FP_cat
   instance : CC_cat MPPC_eq := synCat_cartesian.syn_CC_cat
--- def derive_refl := MPPC_has_derives.MPPC_Der.derive_refl
-  -- The ◇ modality defines a monad on ℂ_MPPC 
-def diamond_monad : category_theory.monad MPPC_eq := {
-  obj := diamond_eq,
-  map := 
-    begin
-      HeavyLiftT? MPPC_Form MPPC_has_derives.MPPC_Der `[ skip ],
-      -- apply @dmap φ_0 φ_1, -- WHY???
-      sorry,
-      thin_cat.by_thin,
-    end,
-  η'  := ⟨
-          by HeavyLiftT MPPC_Form MPPC_has_derives.MPPC_Der `[ apply dpure ],
-          λ X Y f, by apply thin_cat.K,
-         ⟩,
-  μ' :=  ⟨ 
-          by HeavyLiftT MPPC_Form MPPC_has_derives.MPPC_Der `[ apply djoin ],
-          λ X Y f, by apply thin_cat.K,
-         ⟩,
-}
+  def ℂ_MPPC_diamond : category_theory.monad MPPC_eq := synCat_monadic.diamond_monad
 
 end MPPC_synCat
 

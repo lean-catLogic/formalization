@@ -5,6 +5,7 @@ namespace synPoset_cartesian
 open synPoset
 open deduction_basic
 open deduction_cart
+open deduction_monadic
 
 variable {Form : Type}
 
@@ -114,6 +115,34 @@ variable {Form : Type}
 
 end synPoset_cartesian
 
+namespace synPoset_monadic
+
+open synPoset
+open deduction_basic
+open deduction_cart
+open deduction_monadic
+
+variable {Form : Type}
+
+
+lemma diamond_liftable [Der : has_diamond Form] : ∀ φ φ' : Form,
+  (φ ⊣⊢ φ') → ⦃ ◇φ ⦄ = ⦃◇φ'⦄ :=
+  begin
+    assume φ φ' h,
+    apply quotient.sound,
+    cases h with φφ' φ'φ,
+    split,
+    apply Der.dmap,
+    exact φφ',
+    apply Der.dmap,
+    exact φ'φ,
+  end
+
+def diamond_eq [Der : has_diamond Form] : Form _eq → Form _eq :=
+  quot.lift (λ φ , ⦃Der.diamond φ⦄) diamond_liftable
+
+end synPoset_monadic
+
 /- Instances -/
 namespace PPC_synPoset 
 
@@ -148,23 +177,6 @@ namespace MPPC_synPoset
   -- apply derive_refl,
 -- end
 
-lemma diamond_liftable : ∀ φ φ' : MPPC_Form,
-  (φ ⊣⊢ φ') → ⦃ ◇φ ⦄ = ⦃◇φ'⦄ :=
-  begin
-    assume φ φ' h,
-    apply quotient.sound,
-    cases h with φφ' φ'φ,
-    split,
-    dsimp[(⊢),deduction_basic.has_derives.derives],
-    sorry,sorry,
-    -- apply @MPPC_derives.dmap φ φ', -- WHY????
-    -- exact φφ',
-    -- dsimp[(⊢),deduction_basic.has_derives.derives],
-    -- apply @MPPC_derives.dmap φ' φ,
-    -- exact φ'φ,
-  end
 
-def diamond_eq : MPPC_eq → MPPC_eq :=
-  quot.lift (λ φ , ⦃◇φ⦄) diamond_liftable
 
 end MPPC_synPoset

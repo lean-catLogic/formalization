@@ -1,13 +1,15 @@
-import deduction.deduction
+import deduction.deduction deduction.deduction_cartesian
 
 namespace deduction_monadic
 
 open deduction_basic
+open deduction_cart
 
 /- Diamond -/
-class has_diamond (Form : Type) extends has_struct_derives Form := 
+class has_diamond (Form : Type) extends has_impl Form := 
   (diamond : Form → Form)
-  (dmap  : ∀ {φ ψ : Form}, derives {φ} ψ → derives {diamond φ} (diamond ψ))
+  -- (dmap  : ∀ {φ ψ : Form}, derives {φ} ψ → derives {diamond φ} (diamond ψ))
+  (dmap  : ∀ {Φ : Hyp}{φ ψ : Form}, derives (insert φ Φ) ψ → derives (insert (diamond φ) Φ) (diamond ψ))
   (dpure : ∀ {Φ : Hyp} {φ : Form}, derives Φ φ → derives Φ (diamond φ))
   (djoin : ∀ {Φ : Hyp} {φ : Form}, 
     derives Φ (diamond (diamond φ)) → derives Φ (diamond φ))

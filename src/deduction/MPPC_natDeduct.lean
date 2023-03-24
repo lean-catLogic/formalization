@@ -1,4 +1,4 @@
-import deduction.deduction_cartesian data.set.basic
+import deduction.deduction_monadic data.set.basic
 open deduction_basic
 
 
@@ -42,8 +42,11 @@ namespace MPPC_defn
         : MPPC_derives Φ (MPPC_Form.impl φ ψ) → MPPC_derives Φ φ → MPPC_derives Φ ψ
     | weak {Φ Ψ : MPPC_Hyp} {φ : MPPC_Form}
         : MPPC_derives Φ φ → MPPC_derives (Φ ∪ Ψ) φ
-    | dmap {φ ψ : MPPC_Form} 
-        : MPPC_derives {φ} ψ → MPPC_derives {φ.diamond} (ψ.diamond)
+    | dmap {Φ : MPPC_Hyp}{φ ψ : MPPC_Form} 
+        : MPPC_derives (insert φ Φ) ψ → MPPC_derives (insert (MPPC_Form.diamond φ) Φ) (MPPC_Form.diamond ψ)
+
+    -- | dmap {φ ψ : MPPC_Form} 
+    --     : MPPC_derives {φ} ψ → MPPC_derives {φ.diamond} (ψ.diamond)
 
     -- | Dmap {Φ : MPPC_Hyp} {φ : MPPC_Form}
     --     : isModal Φ → MPPC_derives Φ φ → MPPC_derives Φ (MPPC_Form.diamond φ)
@@ -64,6 +67,7 @@ namespace MPPC_has_derives
     open MPPC_defn.MPPC_derives
     open deduction_basic
     open deduction_cart
+    open deduction_monadic
     open MPPC_defn.MPPC_Form
     -- open deduction_monadic
 
@@ -125,11 +129,15 @@ namespace MPPC_has_derives
       and_elimr := @and_elimr,
 
     }
-    instance MPPC_impl : deduction_cart.has_impl MPPC_Form :=
+    instance MPPC_diamond : deduction_monadic.has_diamond MPPC_Form :=
     {
       impl := MPPC_Form.impl,
       impl_intro := @impl_intro,
       impl_elim := @impl_elim,
+      diamond := MPPC_Form.diamond,
+      dmap := @dmap,
+      dpure := @dpure,
+      djoin := @djoin,
     }
     -- #check @dmap
     -- def dmap : ∀ φ ψ : MPPC_Form, 
@@ -146,11 +154,12 @@ namespace MPPC_has_derives
         
       --   exact h,
       -- end 
-
-    -- instance MPPC_diamond : deduction_monadic.has_diamond MPPC_Form :=
+    -- #check MPPC_has_derives.MPPC_Der
+    -- def Der := MPPC_has_derives.MPPC_Der
+    -- instance MPPC_diamond : has_diamond MPPC_Form :=
     -- {
     --   diamond := MPPC_Form.diamond,
-    --   dmap := Dmap, --sorry, --λ φ ψ (h:MPPC_derives {φ} ψ), @dmap φ ψ h,
+    --   dmap :=  @dmap, --λ φ ψ (h:MPPC_derives {φ} ψ), @dmap φ ψ h,
     --   dpure := @dpure,
     --   djoin := @djoin,
     -- }
