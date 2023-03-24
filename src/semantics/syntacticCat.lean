@@ -75,9 +75,10 @@ namespace synCat_tactics
   | `( Π _, %%newGoal) := sloppyMkCount newGoal >>= incrLeft
   | _ := return (0,0)
 
-  meta def doCount : tactic (nat × nat) :=
+  meta def doCount (sloppy : parse (optional $ tk "?")) : tactic (nat × nat) :=
     do
-    (numobjs,nummor) ← target >>= mkCount,
+    let counter := match sloppy with none := mkCount | _ := sloppyMkCount end,
+    (numobjs,nummor) ← target >>= counter,
     trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
     return (numobjs,nummor)
 
@@ -104,7 +105,7 @@ namespace synCat_tactics
       | _ := 3          -- LiftT?!! invoked: also do the first stage of cleanup
       end,
     -- Count & print how many objects and morphisms to assume
-    (numobjs,nummor) ← doCount,
+    (numobjs,nummor) ← doCount none,
     /- Assume objects and morphisms, 
       - use induction to get that every object is of the form ⦃φ⦄ for some φ:Form 
       - use syn_hom_inv to turn every assumed morphism into a derivation -/
@@ -147,8 +148,7 @@ namespace synCat_tactics
       | _ := 3          -- LiftT?!! invoked: also do the first stage of cleanup
       end,
     -- Count & print how many objects and morphisms to assume
-    (numobjs,nummor) ← target >>= sloppyMkCount,
-    trace $ "Objs: " ++ (repr numobjs) ++ ", Morphs: " ++ (repr nummor),
+    (numobjs,nummor) ← doCount (some()),
     /- Assume objects and morphisms, 
       - use induction to get that every object is of the form ⦃φ⦄ for some φ:Form 
       - use syn_hom_inv to turn every assumed morphism into a derivation -/
