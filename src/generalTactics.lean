@@ -3,23 +3,47 @@ import meta.expr
 open tactic
 open nat
   open interactive (parse)
-  open lean.parser (ident)  
-  open lean.parser (tk)
+  open lean.parser (ident)
   open tactic.interactive («have»)
 
+/- Method for reading a string until the nth empty line 
+   Also removes the first line
+-/
 def NEWLINE : char := char.of_nat 10
-def untilFirstEmptyLine (s : string) : string :=
-   string.intercalate "\n" $
-   list.take_while (λ k, k ≠ "") $ 
-   s.split_on NEWLINE
 
--- Tactic for print-debugging
-meta def trace_goal (iden : string) : tactic unit :=
-  do 
-    trace ("\n-- GOAL @ " ++ iden ++ " --"),
-    st ← tactic.read,
-    let s := format.to_string (to_fmt st),
-    trace $ (untilFirstEmptyLine s) ++ "\n"
+def untilNthEmptyLine_core : option nat → list string → string
+| _ [] := ""
+| (some num) (""::rest) := if num=0 then "" else 
+     "\n" ++ untilNthEmptyLine_core (some(num-1)) rest
+| none (line::rest) :=
+    line ++ "\n" ++ untilNthEmptyLine_core none rest
+| (some num) (line::rest) :=  if num=0 then "" else 
+    line ++ "\n" ++ untilNthEmptyLine_core (some num) rest 
+
+def untilNthEmptyLine (onum : option nat) (s : string) : string :=
+  untilNthEmptyLine_core onum $ list.drop 1 $ s.split_on NEWLINE
+
+/- Tactics for print-debugging
+    `trace_goal_core (some n) iden` will print a line with `iden`, 
+      followed by the first `n` goals
+    `trace_goal_core none iden` will print a line with `iden`, 
+      followed by all goals
+-/
+meta def trace_goal_core (o : option nat) (iden : string) : tactic unit :=
+    trace ("\n-- " ++ iden ++ " --") >>
+    tactic.read >>= 
+      trace ∘ (untilNthEmptyLine o) ∘ format.to_string ∘ to_fmt
+
+meta def trace_goal : string → tactic unit :=
+  trace_goal_core (some 1) 
+meta def trace_goals (num : nat) : string → tactic unit :=
+  trace_goal_core (some num) 
+meta def trace_all_goals : string → tactic unit :=
+  trace_goal_core none 
+
+/- Counts how many goals there currently are -/
+meta def count_goals : tactic nat :=
+  tactic.get_goals >>= (return ∘ list.length)
 
 /- Takes a list of names, introduces new variables by those names,
    and then returns a list of the names and corresponding expr's

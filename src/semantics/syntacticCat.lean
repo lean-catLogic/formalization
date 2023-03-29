@@ -111,28 +111,34 @@ namespace synCat_tactics
       - use syn_hom_inv to turn every assumed morphism into a derivation -/
     repeat_assume_induct (gen_nameList `φ_ numobjs),
     repeat_assume_replace `synCat.syn_hom_inv (gen_nameList `f_ nummor),
-    trace_goal "Checkpoint 0",
     -- Turn the synCat hom goal to a derivation goal
     applyc `synCat.syn_hom,
-    trace_goal "Checkpoint 1",
+    trace_goal "MAIN GOAL",
   when (proceedLevel > 1) $ do
+    pre_goal_count ← count_goals,
     -- Apply the input tactic
     T,
-    trace_goal "Checkpoint 2",
+    -- Difference in goals
+    post_goal_count ← count_goals,
+    let relGoals : nat := 
+      if pre_goal_count > post_goal_count
+      then 0
+      else (post_goal_count - pre_goal_count) + 1,
+    trace_goals relGoals "POST-TACTIC GOALS",
   when (proceedLevel > 2) $ do
     -- Eliminate other goals (first stage of cleanup)
     iterate (
       (applyc `deduction_basic.derive_refl)
       <|> assumption
     ),
-    trace_goal "Checkpoint 3",
+    trace_all_goals "CLEANUP GOALS",
   when (proceedLevel > 3) $ do
     -- Prove the coherences
     thin_cat.by_thin
 
-  /- Same as LiftT, but takes in Form and Der as arguments, in case 
-     Lean can't deduce them. Uses sloppyMkCount, in case the object
-     type isn't exactly (Something _eq) -/
+  /- Same as `LiftT`, but takes in `Form` and `Der` as arguments, in case 
+     Lean can't deduce them. Uses `sloppyMkCount`, in case the object
+     type isn't exactly `Something _eq` -/
   meta def HeavyLiftT
     (debugMode : parse (optional $ tk "?")) 
     (debugPerformTac : parse (optional $ tk "!"))
@@ -160,15 +166,25 @@ namespace synCat_tactics
     repeat_assume_replace `synCat.syn_hom_inv (gen_nameList `f_ nummor),
     -- Turn the synCat hom goal to a derivation goal
     applyc `synCat.syn_hom,
+    trace_goal "MAIN GOAL",
   when (proceedLevel > 1) $ do
+    pre_goal_count ← count_goals,
     -- Apply the input tactic
     T,
+    -- Difference in goals
+    post_goal_count ← count_goals,
+    let relGoals : nat := 
+      if pre_goal_count > post_goal_count
+      then 0
+      else (post_goal_count - pre_goal_count) + 1,
+    trace_goals relGoals "POST-TACTIC GOALS",
   when (proceedLevel > 2) $ do
     -- Eliminate other goals (first stage of cleanup)
     iterate (
       (i_to_expr ``(@deduction_basic.derive_refl %%Form %%Der) >>= apply >> return ())
       <|> assumption
     ),
+    trace_all_goals "CLEANUP GOALS",
   when (proceedLevel > 3) $ do
     -- Prove the coherences
     thin_cat.by_thin
